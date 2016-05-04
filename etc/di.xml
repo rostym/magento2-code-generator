@@ -4,9 +4,7 @@
     <type name="Magento\Framework\Console\CommandList">
         <arguments>
             <argument name="commands" xsi:type="array">
-                <item name="triadGenerationCommand" xsi:type="object">
-                    Krifollk\CodeGenerator\Console\Command\TriadGenerateCommand
-                </item>
+                <item name="triadGenerationCommand" xsi:type="object">Krifollk\CodeGenerator\Console\Command\TriadGenerateCommand</item>
             </argument>
         </arguments>
     </type>
