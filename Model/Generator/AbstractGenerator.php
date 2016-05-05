@@ -44,6 +44,6 @@ abstract class AbstractGenerator implements GeneratorInterface
      */
     protected function normalizeModuleName($moduleName)
     {
-        return str_replace('_', '\\', $moduleName);
+        return str_replace('/', '\\', $moduleName);
     }
 }

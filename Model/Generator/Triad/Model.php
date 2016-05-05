@@ -178,7 +178,7 @@ class Model extends AbstractPart
      */
     protected function generateEventPrefix()
     {
-        return mb_strtolower($this->moduleName . '_model_' . $this->entityName);
+        return mb_strtolower(str_replace('/', '_', $this->moduleName) . '_model_' . $this->entityName);
     }
 
     /**

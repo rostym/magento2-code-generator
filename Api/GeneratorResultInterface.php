@@ -23,6 +23,13 @@ interface GeneratorResultInterface
     public function getContent();
 
     /**
+     * Get destination dir
+     *
+     * @return string
+     */
+    public function getDestinationDir();
+
+    /**
      * Get destination path
      *
      * @return string
@@ -30,6 +37,8 @@ interface GeneratorResultInterface
     public function getDestinationFile();
 
     /**
+     * Get entity name
+     *
      * @return string
      */
     public function getEntityName();

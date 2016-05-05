@@ -59,9 +59,9 @@ class TriadGenerateCommand extends AbstractCommand
     {
         $this
             ->setDescription('Generate Model, Resource, Collection and also Repository, by db table.')
-            ->addArgument(self::TABLE_NAME_ARGUMENT, InputArgument::REQUIRED, 'Table name')
             ->addArgument(self::MODULE_NAME_ARGUMENT, InputArgument::REQUIRED, 'Module name')
-            ->addArgument(self::ENTITY_NAME_ARGUMENT, InputArgument::REQUIRED, 'Entity name');
+            ->addArgument(self::ENTITY_NAME_ARGUMENT, InputArgument::REQUIRED, 'Entity name')
+            ->addArgument(self::TABLE_NAME_ARGUMENT, InputArgument::REQUIRED, 'Table name');
 
         parent::configure();
     }

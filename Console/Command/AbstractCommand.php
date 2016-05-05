@@ -26,9 +26,8 @@ abstract class AbstractCommand extends Command
      */
     protected function validateModuleName($moduleName)
     {
-        //todo use Test/Module module name format instead Test_Module
-        if (!preg_match('/[A-Z]+[A-Za-z0-9]+_[A-Z]+[A-Z0-9a-z]+/', $moduleName)) {
-            throw new InvalidArgumentException('Wrong module name. Example: Test_Module');
+        if (!preg_match('/[A-Z]+[A-Za-z0-9]+\/[A-Z]+[A-Z0-9a-z]+/', $moduleName)) {
+            throw new InvalidArgumentException('Wrong module name. Example: Test/Module');
         }
 
         return true;

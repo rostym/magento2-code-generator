@@ -21,6 +21,13 @@ use Zend\Code\Generator\DocBlockGenerator;
  */
 class TableInfo
 {
+    /**#@+
+     * Doc block patterns
+     */
+    const GETTER_DOC_PATTERN = 'Get %s value.';
+    const SETTER_DOC_PATTERN = 'Set %s value.';
+    /**#@-*/
+
     /**
      * DB -> PHP map of types
      *
@@ -105,7 +112,7 @@ class TableInfo
     {
         foreach ($this->getColumnsInfo($tableName) as $columnName => $data) {
             $constName = mb_strtoupper($columnName);
-            $baseMethodName = $this->convertColumnName($columnName);
+            $methodName = $this->convertColumnName($columnName);
 
             if ($data['PRIMARY'] === true) {
                 $this->idFieldName = $columnName;
@@ -113,8 +120,8 @@ class TableInfo
 
             $columnType = $this->detectType($data['DATA_TYPE']);
 
-            $this->addSetter($baseMethodName, $columnType, $constName);
-            $this->addGetter($baseMethodName, $columnType, $constName);
+            $this->addSetter($methodName, $columnType, $constName);
+            $this->addGetter($methodName, $columnType, $constName);
             $this->addConstant($constName, $columnName);
 
             $this->itemsCount++;
@@ -161,42 +168,44 @@ class TableInfo
     }
 
     /**
-     * @param string $baseMethodName
+     * @param string $methodName
      * @param string $columnType
      * @param string $constName
      *
      * @return DocBlockGenerator
      * @throws \Zend\Code\Generator\Exception\InvalidArgumentException
      */
-    protected function addSetter($baseMethodName, $columnType, $constName)
+    protected function addSetter($methodName, $columnType, $constName)
     {
         $docBLock = new DocBlockGenerator();
-        $docBLock->setShortDescription('Set ' . lcfirst($baseMethodName) . ' value.');
 
-        $docBLock->setTag((new GenericTag('param', $columnType . ' $' . lcfirst($baseMethodName))));
+        $parameterName = lcfirst($methodName);
+        $docBLock->setShortDescription(sprintf(self::SETTER_DOC_PATTERN, $parameterName));
+        $docBLock->setTag((new GenericTag('param', sprintf('%s $%s', $columnType, $parameterName))));
         $docBLock->setTag((new GenericTag()));
         $docBLock->setTag((new GenericTag('return', '$this')));
 
-        $this->setters[] = new SetterMethod($constName, $baseMethodName, lcfirst($baseMethodName), $docBLock);
+        $this->setters[] = new SetterMethod($constName, $methodName, $parameterName, $docBLock);
 
         return $this;
     }
 
     /**
-     * @param string $baseMethodName
+     * @param string $methodName
      * @param string $columnType
      * @param string $constName
      *
      * @return $this
      * @throws \Zend\Code\Generator\Exception\InvalidArgumentException
      */
-    protected function addGetter($baseMethodName, $columnType, $constName)
+    protected function addGetter($methodName, $columnType, $constName)
     {
         $docBLock = new DocBlockGenerator();
-        $docBLock->setShortDescription('Get ' . lcfirst($baseMethodName) . ' value.');
+        $parameterName = lcfirst($methodName);
+        $docBLock->setShortDescription(sprintf(self::GETTER_DOC_PATTERN, $parameterName));
         $docBLock->setTag((new GenericTag('return', $columnType)));
 
-        $this->getters[] = new GetterMethod($constName, $baseMethodName, $docBLock);
+        $this->getters[] = new GetterMethod($constName, $methodName, $docBLock);
 
         return $this;
     }

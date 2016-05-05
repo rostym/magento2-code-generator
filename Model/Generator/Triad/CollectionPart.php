@@ -23,12 +23,18 @@ use Zend\Code\Generator\PropertyGenerator;
  */
 class CollectionPart extends AbstractPart
 {
-    const ABSTRACT_COLLECTION_CLASS    = '\Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection';
+    const ABSTRACT_COLLECTION_CLASS = '\Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection';
+
+    /**#@+
+     * Patterns
+     */
     const COLLECTION_NAME_PATTERN      = '\%s\Model\ResourceModel\%s\Collection';
     const COLLECTION_FILE_NAME_PATTERN = '%s/Model/ResourceModel/%s/Collection.php';
     const CONSTRUCT_BODY_PATTERN       = '$this->_init(%s::class, %s::class);';
     const PACKAGE_NAME_PATTERN         = '%s\Model\ResourceModel\\%s\Collection';
-    const DOC_BLOCK_TAGS               = [
+    /**#@-*/
+
+    const DOC_BLOCK_TAGS = [
         'method'   => [
             ' getResource()'             => 'resource',
             '[] getItems()'              => 'model',
@@ -86,9 +92,16 @@ class CollectionPart extends AbstractPart
         $classGenerator->setName($this->generateEntityName(self::COLLECTION_NAME_PATTERN));
         $classGenerator->setExtendedClass(self::ABSTRACT_COLLECTION_CLASS);
         $classGenerator->setDocBlock($this->createDocBlock());
-        $classGenerator->addProperty('_eventPrefix', $this->generateEventPrefixName(),
-            PropertyGenerator::FLAG_PROTECTED);
-        $classGenerator->addProperty('_eventObject', $this->generateEventName(), PropertyGenerator::FLAG_PROTECTED);
+        $classGenerator->addProperty(
+            '_eventPrefix',
+            $this->generateEventPrefixName(),
+            PropertyGenerator::FLAG_PROTECTED
+        );
+        $classGenerator->addProperty(
+            '_eventObject',
+            $this->generateEventObjectName(),
+            PropertyGenerator::FLAG_PROTECTED
+        );
         $this->addConstruct($classGenerator);
 
         return new GeneratorResult(
@@ -137,9 +150,9 @@ class CollectionPart extends AbstractPart
     }
 
     /**
-     * @param $pattern
+     * @param string $pattern
      *
-     * @return mixed
+     * @return string
      */
     protected function generatePackageName($pattern)
     {
@@ -151,13 +164,15 @@ class CollectionPart extends AbstractPart
      */
     protected function generateEventPrefixName()
     {
-        return mb_strtolower($this->moduleName . '_' . $this->entityName . '_collection');
+        $modulePart = str_replace('/', '_', $this->moduleName);
+
+        return mb_strtolower(sprintf('%s_%s_collection',$modulePart, $this->entityName));
     }
 
     /**
      * @return string
      */
-    protected function generateEventName()
+    protected function generateEventObjectName()
     {
         return $this->generateEventPrefixName() . '_object';
     }
