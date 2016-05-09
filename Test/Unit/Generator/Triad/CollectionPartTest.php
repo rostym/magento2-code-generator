@@ -20,12 +20,12 @@ class CollectionPartTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @param array $inputData
-     * @param array $outputData
+     * @param array $resultData
      *
      * @test
      * @dataProvider dataProvider
      */
-    public function generate(array $inputData, array $outputData)
+    public function generate(array $inputData, array $resultData)
     {
         $collectionGenerator = $this->getMockBuilder(CollectionPart::class)
             ->setMethods(['getBasePath'])
@@ -43,9 +43,9 @@ class CollectionPartTest extends \PHPUnit_Framework_TestCase
         $result = $collectionGenerator->generate();
 
         self::assertInstanceOf(GeneratorResultInterface::class, $result);
-        self::assertEquals($outputData['content'], $result->getContent());
-        self::assertEquals($outputData['entityName'], $result->getEntityName());
-        self::assertEquals($outputData['destinationFile'], $result->getDestinationFile());
+        self::assertEquals($resultData['content'], $result->getContent());
+        self::assertEquals($resultData['entityName'], $result->getEntityName());
+        self::assertEquals($resultData['destinationFile'], $result->getDestinationFile());
     }
 
     /**

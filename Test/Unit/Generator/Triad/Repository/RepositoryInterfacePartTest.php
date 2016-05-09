@@ -47,6 +47,9 @@ class RepositoryInterfacePartTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($resultData['destinationFile'], $result->getDestinationFile());
     }
 
+    /**
+     * @return array
+     */
     public function dataProvider()
     {
         return require __DIR__ . '/_files/repositoryInterfaceData.php';
