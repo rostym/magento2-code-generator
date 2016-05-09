@@ -65,15 +65,22 @@ class ModuleXml extends AbstractGenerator
         $version = $this->version ?: self::DEFAULT_VERSION;
         $moduleName = str_replace('/', '_', $this->moduleName);
 
-        //todo move content to separate file
-        $content = '<?xml version="1.0"?>
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
-    <module name="%s" setup_version="%s">
-    </module>
-</config>';
+        $dom = new \DOMDocument('1.0', 'UTF-8');
 
-        return sprintf($content, $moduleName, $version);
+        $config = $dom->createElement('config');
+        $config->setAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+        $config->setAttribute('xsi:noNamespaceSchemaLocation', 'urn:magento:framework:Module/etc/module.xsd');
+
+        $module = $dom->createElement('module');
+        $module->setAttribute('name', $moduleName);
+        $module->setAttribute('setup_version', $version);
+
+        $config->appendChild($module);
+
+        $dom->appendChild($config);
+        $dom->formatOutput = true;
+
+        return $dom->saveXML();
     }
 
     /**
