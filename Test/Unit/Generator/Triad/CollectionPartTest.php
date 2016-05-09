@@ -1,0 +1,58 @@
+<?php
+/**
+ * This file is part of Code Generator for Magento.
+ * (c) 2016. Rostyslav Tymoshenko <krifollk@gmail.com>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Krifollk\CodeGenerator\Test\Unit\Generator\Triad;
+
+use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
+use Krifollk\CodeGenerator\Model\Generator\Triad\CollectionPart;
+
+/**
+ * Class CollectionPartTest
+ *
+ * @package Krifollk\CodeGenerator\Test\Unit\Generator\Triad
+ */
+class CollectionPartTest extends \PHPUnit_Framework_TestCase
+{
+    /**
+     * @param array $inputData
+     * @param array $outputData
+     *
+     * @test
+     * @dataProvider dataProvider
+     */
+    public function generate(array $inputData, array $outputData)
+    {
+        $collectionGenerator = $this->getMockBuilder(CollectionPart::class)
+            ->setMethods(['getBasePath'])
+            ->setConstructorArgs([
+                'moduleName'    => $inputData['moduleName'],
+                'entityName'    => $inputData['entityName'],
+                'modelClass'    => $inputData['modelClass'],
+                'resourceClass' => $inputData['resourceClass'],
+            ])
+            ->getMock();
+
+        $collectionGenerator->method('getBasePath')->willReturn('/base/path');
+
+        /** @var CollectionPart $collectionGenerator */
+        $result = $collectionGenerator->generate();
+
+        self::assertInstanceOf(GeneratorResultInterface::class, $result);
+        self::assertEquals($outputData['content'], $result->getContent());
+        self::assertEquals($outputData['entityName'], $result->getEntityName());
+        self::assertEquals($outputData['destinationFile'], $result->getDestinationFile());
+    }
+
+    /**
+     * @return array
+     */
+    public function dataProvider()
+    {
+        return require __DIR__ . '/_files/collectionPart.php';
+    }
+}
