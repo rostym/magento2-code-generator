@@ -6,15 +6,16 @@
  * file that was distributed with this source code.
  */
 
-namespace Krifollk\CodeGenerator\Test\Unit\Generator\Triad\Repository;
+namespace Krifollk\CodeGenerator\Test\Integration\Generator\Triad\Repository;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
 use Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryInterfacePart;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class RepositoryInterfacePartTest
  *
- * @package Krifollk\CodeGenerator\Test\Unit\Generator\Triad\Repository
+ * @package Krifollk\CodeGenerator\Test\Integration\Generator\Triad\Repository
  */
 class RepositoryInterfacePartTest extends \PHPUnit_Framework_TestCase
 {
@@ -27,16 +28,15 @@ class RepositoryInterfacePartTest extends \PHPUnit_Framework_TestCase
      */
     public function generate(array $inputData, array $resultData)
     {
-        $repositoryInterfaceGenerator = $this->getMockBuilder(RepositoryInterfacePart::class)
-            ->setMethods(['getBasePath'])
-            ->setConstructorArgs([
-                'moduleName'         => $inputData['moduleName'],
-                'entityName'         => $inputData['entityName'],
-                'modelInterfaceName' => $inputData['modelInterfaceName'],
-            ])
-            ->getMock();
-
-        $repositoryInterfaceGenerator->method('getBasePath')->willReturn('/base/path');
+        $repositoryInterfaceGenerator = Bootstrap::getObjectManager()
+            ->create(
+                RepositoryInterfacePart::class,
+                [
+                    'moduleName'         => $inputData['moduleName'],
+                    'entityName'         => $inputData['entityName'],
+                    'modelInterfaceName' => $inputData['modelInterfaceName'],
+                ]
+            );
 
         /** @var RepositoryInterfacePart $repositoryInterfaceGenerator */
         $result = $repositoryInterfaceGenerator->generate();
@@ -44,7 +44,7 @@ class RepositoryInterfacePartTest extends \PHPUnit_Framework_TestCase
         self::assertInstanceOf(GeneratorResultInterface::class, $result);
         self::assertEquals($resultData['content'], $result->getContent());
         self::assertEquals($resultData['entityName'], $result->getEntityName());
-        self::assertEquals($resultData['destinationFile'], $result->getDestinationFile());
+        self::assertContains($resultData['destinationFile'], $result->getDestinationFile());
     }
 
     /**

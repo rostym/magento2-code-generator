@@ -15,7 +15,7 @@ return [
             'resourceClass' => '\Test\Module\Model\ResourceModel\Test',
         ],
         [// generated data
-            'destinationFile' => '/base/path/app/code/Test/Module/Model/ResourceModel/Test/Collection.php',
+            'destinationFile' => 'app/code/Test/Module/Model/ResourceModel/Test/Collection.php',
             'entityName'      => '\Test\Module\Model\ResourceModel\Test\Collection',
             'content'         => '<?php
 

@@ -14,7 +14,7 @@ return [
             'modelInterfaceName' => '\Test\Module\Model\Test',
         ],
         [
-            'destinationFile' => '/base/path/app/code/Test/Module/Api/TestRepositoryInterface.php',
+            'destinationFile' => 'app/code/Test/Module/Api/TestRepositoryInterface.php',
             'entityName'      => '\Test\Module\Api\TestRepositoryInterface',
             'content'         => '<?php
 

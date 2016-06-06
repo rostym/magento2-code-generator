@@ -6,19 +6,22 @@
  * file that was distributed with this source code.
  */
 
-namespace Krifollk\CodeGenerator\Test\Unit\Generator\Triad;
+namespace Krifollk\CodeGenerator\Test\Integration\Generator\Triad;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
 use Krifollk\CodeGenerator\Model\Generator\Triad\CollectionPart;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class CollectionPartTest
  *
- * @package Krifollk\CodeGenerator\Test\Unit\Generator\Triad
+ * @package Krifollk\CodeGenerator\Test\Integration\Generator\Triad
  */
 class CollectionPartTest extends \PHPUnit_Framework_TestCase
 {
     /**
+     * Test Collection file generator
+     *
      * @param array $inputData
      * @param array $resultData
      *
@@ -27,17 +30,16 @@ class CollectionPartTest extends \PHPUnit_Framework_TestCase
      */
     public function generate(array $inputData, array $resultData)
     {
-        $collectionGenerator = $this->getMockBuilder(CollectionPart::class)
-            ->setMethods(['getBasePath'])
-            ->setConstructorArgs([
-                'moduleName'    => $inputData['moduleName'],
-                'entityName'    => $inputData['entityName'],
-                'modelClass'    => $inputData['modelClass'],
-                'resourceClass' => $inputData['resourceClass'],
-            ])
-            ->getMock();
-
-        $collectionGenerator->method('getBasePath')->willReturn('/base/path');
+        $collectionGenerator = Bootstrap::getObjectManager()
+            ->create(
+                CollectionPart::class,
+                [
+                    'moduleName'    => $inputData['moduleName'],
+                    'entityName'    => $inputData['entityName'],
+                    'modelClass'    => $inputData['modelClass'],
+                    'resourceClass' => $inputData['resourceClass'],
+                ]
+            );
 
         /** @var CollectionPart $collectionGenerator */
         $result = $collectionGenerator->generate();
@@ -45,7 +47,7 @@ class CollectionPartTest extends \PHPUnit_Framework_TestCase
         self::assertInstanceOf(GeneratorResultInterface::class, $result);
         self::assertEquals($resultData['content'], $result->getContent());
         self::assertEquals($resultData['entityName'], $result->getEntityName());
-        self::assertEquals($resultData['destinationFile'], $result->getDestinationFile());
+        self::assertContains($resultData['destinationFile'], $result->getDestinationFile());
     }
 
     /**
