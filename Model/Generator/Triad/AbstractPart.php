@@ -68,9 +68,19 @@ abstract class AbstractPart extends AbstractGenerator
      */
     protected function generateFilePath($pattern)
     {
-        return BP
+        return $this->getBasePath()
         . '/app/code/'
         . sprintf($pattern, str_replace('_', '/', $this->moduleName), $this->entityName);
+    }
+
+    /**
+     * Get base path
+     * 
+     * @return string
+     */
+    protected function getBasePath()
+    {
+        return BP;
     }
 
     /**
