@@ -34,12 +34,30 @@ class TableInfo
      * @var array
      */
     protected $mapTypes = [
-        'varchar'   => 'string',
-        'smallint'  => 'int',
-        'text'      => 'string',
-        'decimal'   => 'float',
-        'timestamp' => 'string',
-        'datetime'  => 'string',
+        'varchar'    => 'string',
+        'smallint'   => 'int',
+        'tinyint'    => 'int',
+        'mediumint'  => 'int',
+        'bigint'     => 'int',
+        'text'       => 'string',
+        'decimal'    => 'float',
+        'timestamp'  => 'string',
+        'datetime'   => 'string',
+        'date'       => 'string',
+        'time'       => 'string',
+        'year'       => 'string',
+        'char'       => 'string',
+        'tinyblob'   => 'string',
+        'tinytext'   => 'string',
+        'blob'       => 'string',
+        'mediumblob' => 'string',
+        'mediumtext' => 'string',
+        'longblob'   => 'string',
+        'longtext'   => 'string',
+        'enum'       => 'string',
+        'set'        => 'string',
+        'binary'     => 'string',
+        'varbinary'  => 'string',
     ];
 
     /**
@@ -164,7 +182,9 @@ class TableInfo
      */
     protected function detectType($dbType)
     {
-        return isset($this->mapTypes[$dbType]) ? $this->mapTypes[$dbType] : $dbType;
+        $type = explode('(', $dbType)[0];//retrieving type without length
+
+        return isset($this->mapTypes[$type]) ? $this->mapTypes[$type] : $type;
     }
 
     /**
@@ -177,6 +197,7 @@ class TableInfo
      */
     protected function addSetter($methodName, $columnType, $constName)
     {
+        //todo move doc block generation to  Krifollk\CodeGenerator\Model\Generator\Triad\Model
         $docBLock = new DocBlockGenerator();
 
         $parameterName = lcfirst($methodName);
@@ -200,6 +221,7 @@ class TableInfo
      */
     protected function addGetter($methodName, $columnType, $constName)
     {
+        //todo move doc block generation to  Krifollk\CodeGenerator\Model\Generator\Triad\Model
         $docBLock = new DocBlockGenerator();
         $parameterName = lcfirst($methodName);
         $docBLock->setShortDescription(sprintf(self::GETTER_DOC_PATTERN, $parameterName));
