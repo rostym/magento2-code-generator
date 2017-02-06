@@ -6,6 +6,7 @@
             <argument name="commands" xsi:type="array">
                 <item name="triadGenerationCommand" xsi:type="object">Krifollk\CodeGenerator\Console\Command\TriadGenerateCommand</item>
                 <item name="moduleGenerationCommand" xsi:type="object">Krifollk\CodeGenerator\Console\Command\GenerateModule</item>
+                <item name="crudGenerationCommand" xsi:type="object">Krifollk\CodeGenerator\Console\Command\GenerateCrud</item>
             </argument>
         </arguments>
     </type>
