@@ -8,7 +8,13 @@
 
 namespace Krifollk\CodeGenerator\Model\Command;
 
+use Krifollk\CodeGenerator\Model\Generator\Crud\Config\Adminhtml\Routes;
+use Krifollk\CodeGenerator\Model\Generator\Crud\Config\Di;
+use Krifollk\CodeGenerator\Model\Generator\Crud\Grid\Collection;
+use Krifollk\CodeGenerator\Model\Generator\Crud\Layout\Edit;
+use Krifollk\CodeGenerator\Model\Generator\Crud\Layout\Index;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Layout\IndexFactory;
+use Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent\FormFactory;
 use Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent\ListingFactory;
 use Krifollk\CodeGenerator\Model\Generator\Triad\CollectionPartFactory;
 use Krifollk\CodeGenerator\Model\Generator\Triad\InterfacePartFactory;
@@ -24,15 +30,14 @@ use Krifollk\CodeGenerator\Model\Generator\Triad\ResourcePartFactory;
  */
 class Crud extends Triad
 {
-    /**
-     * @var ListingFactory
-     */
+    /** @var ListingFactory */
     private $listingFactory;
 
-    /**
-     * @var IndexFactory
-     */
+    /** @var IndexFactory */
     private $indexFactory;
+
+    /** @var FormFactory */
+    private $formFactory;
 
     public function __construct(
         ModelFactory $modelFactory,
@@ -43,6 +48,7 @@ class Crud extends Triad
         RepositoryPartFactory $repositoryPart,
         ListingFactory $listingFactory,
         IndexFactory $indexFactory,
+        FormFactory $formFactory,
         \Magento\Framework\Filesystem\Driver\File $file
     ) {
         parent::__construct(
@@ -55,7 +61,8 @@ class Crud extends Triad
             $file
         );
         $this->listingFactory = $listingFactory;
-        $this->indexFactory   = $indexFactory;
+        $this->indexFactory = $indexFactory;
+        $this->formFactory = $formFactory;
     }
 
     /**
@@ -65,10 +72,32 @@ class Crud extends Triad
     {
         $entities = parent::prepareEntities($moduleName, $tableName, $entityName);
 
-        $entities['ui_component_listing'] = $this->createUiComponentListingPart($moduleName, $tableName, $entityName)->generate();
+        $entities['ui_component_listing'] = $this->createUiComponentListingPart($moduleName, $tableName,$entityName)->generate();
         $entities['adminhtml_controller_index'] = $this->createIndexController($moduleName, $entityName)->generate();
+        $entities['adminhtml_router'] = (new Routes($moduleName))->generate();//todo
+        $entities['grid_collection'] = (new Collection($moduleName, $entityName))->generate(); //todo
+        $entities['layout_index'] = (new Index($moduleName, $entityName))->generate(); //todo
+        $entities['layout_edit'] = (new Edit($moduleName, $entityName))->generate(); //todo
+        $entities['di'] = (new Di($entityName, $entities['grid_collection']->getEntityName(), $moduleName, $tableName, $entities['resource']->getEntityName()))->generate();//todo
+        $entities['ui_component_form'] = $this->createUiFormGenerator($moduleName, $tableName, $entityName)->generate();
 
         return $entities;
+    }
+
+    /**
+     * @param $moduleName
+     * @param $tableName
+     * @param $entityName
+     *
+     * @return \Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent\Listing
+     */
+    protected function createUiComponentListingPart($moduleName, $tableName, $entityName)
+    {
+        return $this->listingFactory->create([
+            'tableName'  => $tableName,
+            'moduleName' => $moduleName,
+            'entityName' => $entityName,
+        ]);
     }
 
     /**
@@ -85,16 +114,9 @@ class Crud extends Triad
         ]);
     }
 
-    /**
-     * @param $moduleName
-     * @param $tableName
-     * @param $entityName
-     *
-     * @return \Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent\Listing
-     */
-    protected function createUiComponentListingPart($moduleName, $tableName, $entityName)
+    protected function createUiFormGenerator($moduleName, $tableName, $entityName)
     {
-        return $this->listingFactory->create([
+        return $this->formFactory->create([
             'tableName'  => $tableName,
             'moduleName' => $moduleName,
             'entityName' => $entityName,

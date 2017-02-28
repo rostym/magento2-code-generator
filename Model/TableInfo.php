@@ -8,6 +8,7 @@
 
 namespace Krifollk\CodeGenerator\Model;
 
+use Krifollk\CodeGenerator\Model\TableInfo\Column;
 use Krifollk\CodeGenerator\Model\TableInfo\Constant;
 use Krifollk\CodeGenerator\Model\TableInfo\GetterMethod;
 use Krifollk\CodeGenerator\Model\TableInfo\SetterMethod;
@@ -89,6 +90,11 @@ class TableInfo
     private $constant = [];
 
     /**
+     * @var Column[]
+     */
+    private $columns = [];
+
+    /**
      * Items count
      *
      * @var int
@@ -129,19 +135,22 @@ class TableInfo
     protected function init($tableName)
     {
         foreach ($this->getColumnsInfo($tableName) as $columnName => $data) {
+            $isPrimaryColumn = false;
             $constName = mb_strtoupper($columnName);
             $methodName = $this->convertColumnName($columnName);
 
             if ($data['PRIMARY'] === true) {
                 $this->idFieldName = $columnName;
+                $isPrimaryColumn = true;
             }
+            $originalType = explode('(', $data['DATA_TYPE'])[0];//retrieving type without length
+            $phpType = $this->getPhpType($originalType);
 
-            $columnType = $this->detectType($data['DATA_TYPE']);
-
-            $this->addSetter($methodName, $columnType, $constName);
-            $this->addGetter($methodName, $columnType, $constName);
+            $this->addSetter($methodName, $phpType, $constName);
+            $this->addGetter($methodName, $phpType, $constName);
             $this->addConstant($constName, $columnName);
 
+            $this->columns[$columnName] = new Column($columnName, $isPrimaryColumn, $phpType, $originalType);
             $this->itemsCount++;
         }
 
@@ -176,14 +185,12 @@ class TableInfo
     /**
      * Detect type
      *
-     * @param string $dbType
+     * @param string $type
      *
      * @return string
      */
-    protected function detectType($dbType)
+    protected function getPhpType($type)
     {
-        $type = explode('(', $dbType)[0];//retrieving type without length
-
         return isset($this->mapTypes[$type]) ? $this->mapTypes[$type] : $type;
     }
 
@@ -192,7 +199,7 @@ class TableInfo
      * @param string $columnType
      * @param string $constName
      *
-     * @return DocBlockGenerator
+     * @return void
      * @throws \Zend\Code\Generator\Exception\InvalidArgumentException
      */
     protected function addSetter($methodName, $columnType, $constName)
@@ -207,8 +214,6 @@ class TableInfo
         $docBLock->setTag((new GenericTag('return', '$this')));
 
         $this->setters[] = new SetterMethod($constName, $methodName, $parameterName, $docBLock);
-
-        return $this;
     }
 
     /**
@@ -245,6 +250,16 @@ class TableInfo
         $this->constant[] = new Constant($constName, $columnName);
 
         return $this;
+    }
+
+    /**
+     * Get columns
+     *
+     * @return Column[]
+     */
+    public function getColumns()
+    {
+        return $this->columns;
     }
 
     /**
