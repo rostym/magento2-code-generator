@@ -14,6 +14,8 @@ use Krifollk\CodeGenerator\Model\Generator\Crud\Grid\Collection;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Layout\Edit;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Layout\Index;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Layout\IndexFactory;
+use Krifollk\CodeGenerator\Model\Generator\Crud\Layout\NewLayout;
+use Krifollk\CodeGenerator\Model\Generator\Crud\Model\DataProvider;
 use Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent\FormFactory;
 use Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent\ListingFactory;
 use Krifollk\CodeGenerator\Model\Generator\Triad\CollectionPartFactory;
@@ -78,8 +80,10 @@ class Crud extends Triad
         $entities['grid_collection'] = (new Collection($moduleName, $entityName))->generate(); //todo
         $entities['layout_index'] = (new Index($moduleName, $entityName))->generate(); //todo
         $entities['layout_edit'] = (new Edit($moduleName, $entityName))->generate(); //todo
+        $entities['layout_new'] = (new NewLayout($moduleName, $entityName))->generate(); //todo
         $entities['di'] = (new Di($entityName, $entities['grid_collection']->getEntityName(), $moduleName, $tableName, $entities['resource']->getEntityName()))->generate();//todo
         $entities['ui_component_form'] = $this->createUiFormGenerator($moduleName, $tableName, $entityName)->generate();
+        $entities['form_data_provider'] = (new DataProvider($moduleName, $entityName, $entities['collection']->getEntityName()))->generate();
 
         return $entities;
     }
