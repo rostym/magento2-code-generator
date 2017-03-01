@@ -47,19 +47,20 @@ class NodeBuilder
      */
     private function initRoot($name, array $attributes)
     {
-        $this->elementNode($name, '', $attributes);
+        $this->elementNode($name, $attributes, '');
         $this->rootElement = $this->lastCreatedElement;
         $this->children();
     }
 
     /**
      * @param string $name
-     * @param string $value
      * @param array  $attributes
+     *
+     * @param string $value
      *
      * @return $this
      */
-    public function elementNode($name, $value = '', array $attributes = [])
+    public function elementNode($name, array $attributes = [], $value = '')
     {
         $element = $this->domDocument->createElement($name);
 
@@ -116,7 +117,7 @@ class NodeBuilder
     {
         $baseAttributes = ['name' => $name, 'xsi:type' => $type];
         $attributes = array_merge($baseAttributes, $additionalAttributes);
-        $this->elementNode('item', $value, $attributes);
+        $this->elementNode('item', $attributes, $value);
 
         return $this;
     }
@@ -131,7 +132,7 @@ class NodeBuilder
     public function argumentNode($name, $type, $value = '')
     {
         $baseAttributes = ['name' => $name, 'xsi:type' => $type];
-        $this->elementNode('argument', $value, $baseAttributes);
+        $this->elementNode('argument', $baseAttributes, $value);
 
         return $this;
     }

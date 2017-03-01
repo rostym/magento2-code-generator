@@ -68,7 +68,7 @@ class Form extends \Krifollk\CodeGenerator\Model\Generator\AbstractGenerator
                     ->itemNode('save_and_continue', 'string', '')
                 ->endNode()
             ->endNode()
-            ->elementNode('dataSource', '', ['name' => $this->generateProviderName()])->children()
+            ->elementNode('dataSource', ['name' => $this->generateProviderName()])->children()
                 ->argumentNode('dataProvider', 'configurableObject')->children()
                     ->argumentNode('class', 'string', '')//TODO
                     ->argumentNode('name', 'string', $this->generateProviderName())
@@ -86,7 +86,7 @@ class Form extends \Krifollk\CodeGenerator\Model\Generator\AbstractGenerator
                     ->endNode()
                 ->endNode()
             ->endNode()
-            ->elementNode('fieldset', '', ['name' => 'general'])->children()
+            ->elementNode('fieldset', ['name' => 'general'])->children()
                 ->argumentNode('data', 'array')->children()
                     ->itemNode('config', 'array')->children()
                         ->itemNode('label', 'string')
@@ -94,7 +94,7 @@ class Form extends \Krifollk\CodeGenerator\Model\Generator\AbstractGenerator
                 ->endNode();
 
         foreach ($this->getColumns() as $column) {
-            $form->elementNode('field', '', ['name' => $column->getName()])->children()
+            $form->elementNode('field', ['name' => $column->getName()])->children()
                     ->argumentNode('data', 'array')->children()
                         ->itemNode('config', 'array')->children()
                             ->itemNode('visible', 'boolean', 'true')
@@ -117,7 +117,7 @@ class Form extends \Krifollk\CodeGenerator\Model\Generator\AbstractGenerator
         );
     }
 
-    protected function generateJsConfigProviderName(): string
+    protected function generateJsConfigProviderName()
     {
         return sprintf(
             '%s_%s_form.%s',
