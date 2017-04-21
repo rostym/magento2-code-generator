@@ -39,9 +39,11 @@ class NewLayout extends AbstractLayout
     /**
      * Generate entity
      *
+     * @param array $arguments
+     *
      * @return GeneratorResultInterface
      */
-    public function generate()
+    public function generate(array $arguments = [])
     {
         $new = new NodeBuilder('page', [
             'xmlns:xsi'                     => 'http://www.w3.org/2001/XMLSchema-instance',
@@ -63,7 +65,7 @@ class NewLayout extends AbstractLayout
     private function generateEditHandleName()
     {
         $normalizedModuleName = mb_strtolower(str_replace('/', '_', $this->moduleName));
-        $entityName = lcfirst($this->entityName);
+        $entityName = mb_strtolower($this->entityName);
 
         return sprintf('%s_%s_edit', $normalizedModuleName, $entityName);
     }
@@ -74,7 +76,7 @@ class NewLayout extends AbstractLayout
     protected function getDestinationFile()
     {
         $normalizedModuleName = mb_strtolower(str_replace('/', '_', $this->moduleName));
-        $entityName = lcfirst($this->entityName);
+        $entityName = mb_strtolower($this->entityName);
 
         return sprintf(self::FILE, $this->moduleName, $normalizedModuleName, $entityName);
     }

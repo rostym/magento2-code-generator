@@ -86,11 +86,11 @@ class Model extends AbstractPart
     /**
      * Generate entity
      *
+     * @param array $arguments
+     *
      * @return GeneratorResult
-     * @throws \Zend\Code\Generator\Exception\InvalidArgumentException
-     * @throws \InvalidArgumentException
      */
-    public function generate()
+    public function generate(array $arguments = [])
     {
         $classGenerator = $this->createEntityGenerator();
         $classGenerator->setName($this->generateEntityName(self::MODEL_NAME_PATTERN));

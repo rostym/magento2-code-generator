@@ -61,9 +61,11 @@ class Di extends AbstractGenerator
     /**
      * Generate entity
      *
+     * @param array $arguments
+     *
      * @return GeneratorResultInterface
      */
-    public function generate()
+    public function generate(array $arguments = [])
     {
         $this->dom = new \DOMDocument('1.0', 'UTF-8');
 

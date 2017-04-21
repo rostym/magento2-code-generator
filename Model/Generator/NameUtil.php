@@ -44,6 +44,6 @@ final class NameUtil
     public static function generateListingName($moduleName, $entityName)
     {
         self::validateModuleName($moduleName);
-        return sprintf('%s_%s_listing', strtolower($moduleName), lcfirst($entityName));
+        return sprintf('%s_%s_listing', strtolower($moduleName), mb_strtolower($entityName));
     }
 }

@@ -27,9 +27,11 @@ class Registration extends AbstractGenerator
     /**
      * Generate entity
      *
+     * @param array $arguments
+     *
      * @return GeneratorResultInterface
      */
-    public function generate()
+    public function generate(array $arguments = [])
     {
         $fileGenerator = new FileGenerator();
         $fileGenerator->setUse(self::COMPONENT_REGISTRAR_USE);

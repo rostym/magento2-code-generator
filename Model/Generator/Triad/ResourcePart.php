@@ -58,11 +58,11 @@ class ResourcePart extends AbstractPart
     /**
      * Generate entity
      *
+     * @param array $arguments
+     *
      * @return GeneratorResultInterface
-     * @throws \Zend\Code\Generator\Exception\InvalidArgumentException
-     * @throws \InvalidArgumentException
      */
-    public function generate()
+    public function generate(array $arguments = [])
     {
         $classGenerator = $this->createEntityGenerator();
         $classGenerator->setName($this->generateEntityName(self::RESOURCE_MODEL_NAME_PATTERN));

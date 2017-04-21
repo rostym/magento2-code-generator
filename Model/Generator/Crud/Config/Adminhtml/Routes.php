@@ -24,9 +24,11 @@ class Routes extends AbstractGenerator
     /**
      * Generate entity
      *
+     * @param array $arguments
+     *
      * @return GeneratorResultInterface
      */
-    public function generate()
+    public function generate(array $arguments = [])
     {
         $dom = new \DOMDocument('1.0', 'UTF-8');
 

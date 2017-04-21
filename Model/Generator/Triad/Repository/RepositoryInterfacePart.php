@@ -29,11 +29,11 @@ class RepositoryInterfacePart extends AbstractRepositoryPart
     /**
      * Generate entity
      *
+     * @param array $arguments
+     *
      * @return GeneratorResultInterface
-     * @throws \Zend\Code\Generator\Exception\InvalidArgumentException
-     * @throws \InvalidArgumentException
      */
-    public function generate()
+    public function generate(array $arguments = [])
     {
         $entityGenerator = $this->createEntityGenerator();
         $entityGenerator->setName($this->generateEntityName(self::REPOSITORY_INTERFACE_NAME_PATTERN));

@@ -18,7 +18,9 @@ interface GeneratorInterface
     /**
      * Generate entity
      *
+     * @param array $arguments
+     *
      * @return GeneratorResultInterface
      */
-    public function generate();
+    public function generate(array $arguments = []);
 }

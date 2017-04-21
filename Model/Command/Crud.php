@@ -10,6 +10,9 @@ namespace Krifollk\CodeGenerator\Model\Command;
 
 use Krifollk\CodeGenerator\Model\Generator\Crud\Config\Adminhtml\Routes;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Config\Di;
+use Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml\Edit as EditAction;
+use Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml\NewAction;
+use Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml\Save;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Grid\Collection;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Layout\Edit;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Layout\Index;
@@ -17,6 +20,7 @@ use Krifollk\CodeGenerator\Model\Generator\Crud\Layout\IndexFactory;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Layout\NewLayout;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Model\DataProvider;
 use Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent\FormFactory;
+use Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent\Listing\Column\EntityActions;
 use Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent\ListingFactory;
 use Krifollk\CodeGenerator\Model\Generator\Triad\CollectionPartFactory;
 use Krifollk\CodeGenerator\Model\Generator\Triad\InterfacePartFactory;
@@ -24,6 +28,7 @@ use Krifollk\CodeGenerator\Model\Generator\Triad\ModelFactory;
 use Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryInterfacePartFactory;
 use Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryPartFactory;
 use Krifollk\CodeGenerator\Model\Generator\Triad\ResourcePartFactory;
+use Krifollk\CodeGenerator\Model\TableInfoFactory;
 
 /**
  * Class Crud
@@ -40,6 +45,10 @@ class Crud extends Triad
 
     /** @var FormFactory */
     private $formFactory;
+    /**
+     * @var TableInfoFactory
+     */
+    private $tableInfoFactory;
 
     public function __construct(
         ModelFactory $modelFactory,
@@ -51,7 +60,8 @@ class Crud extends Triad
         ListingFactory $listingFactory,
         IndexFactory $indexFactory,
         FormFactory $formFactory,
-        \Magento\Framework\Filesystem\Driver\File $file
+        \Magento\Framework\Filesystem\Driver\File $file,
+        TableInfoFactory $tableInfoFactory
     ) {
         parent::__construct(
             $modelFactory,
@@ -65,6 +75,7 @@ class Crud extends Triad
         $this->listingFactory = $listingFactory;
         $this->indexFactory = $indexFactory;
         $this->formFactory = $formFactory;
+        $this->tableInfoFactory = $tableInfoFactory;
     }
 
     /**
@@ -73,8 +84,15 @@ class Crud extends Triad
     protected function prepareEntities($moduleName, $tableName, $entityName)
     {
         $entities = parent::prepareEntities($moduleName, $tableName, $entityName);
-
-        $entities['ui_component_listing'] = $this->createUiComponentListingPart($moduleName, $tableName,$entityName)->generate();
+        $idFieldName = $this->tableInfoFactory->create(['tableName' => $tableName])->getIdFieldName();
+        $entities['entity_actions'] = (new EntityActions())->generate(
+            [
+                'moduleName' => $moduleName,
+                'entityName' => $entityName,
+                'idFieldName' => $idFieldName
+            ]
+        );
+        $entities['ui_component_listing'] = $this->createUiComponentListingPart($moduleName, $tableName,$entityName)->generate(['actionsColumnClass' => $entities['entity_actions']->getEntityName()]);
         $entities['adminhtml_controller_index'] = $this->createIndexController($moduleName, $entityName)->generate();
         $entities['adminhtml_router'] = (new Routes($moduleName))->generate();//todo
         $entities['grid_collection'] = (new Collection($moduleName, $entityName))->generate(); //todo
@@ -82,8 +100,22 @@ class Crud extends Triad
         $entities['layout_edit'] = (new Edit($moduleName, $entityName))->generate(); //todo
         $entities['layout_new'] = (new NewLayout($moduleName, $entityName))->generate(); //todo
         $entities['di'] = (new Di($entityName, $entities['grid_collection']->getEntityName(), $moduleName, $tableName, $entities['resource']->getEntityName()))->generate();//todo
-        $entities['ui_component_form'] = $this->createUiFormGenerator($moduleName, $tableName, $entityName)->generate();
         $entities['form_data_provider'] = (new DataProvider($moduleName, $entityName, $entities['collection']->getEntityName()))->generate();
+        $entities['ui_component_form'] = $this->createUiFormGenerator($moduleName, $tableName, $entityName)->generate(['dataProvider' => $entities['form_data_provider']->getEntityName()]);
+        $entities['index_controller'] = (new \Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml\Index())->generate(['moduleName' => $moduleName, 'entityName' => $entityName]);
+        $entities['new_controller'] = (new NewAction())->generate(['moduleName' => $moduleName, 'entityName' => $entityName]);
+        $entities['edit_controller'] = (new EditAction())->generate(['moduleName' => $moduleName, 'entityName' => $entityName, 'entityRepository' => $entities['repositoryInterface']->getEntityName()]);
+
+        $entities['save_controller'] = (new Save())->generate(
+            [
+                'moduleName'       => $moduleName,
+                'entityName'       => $entityName,
+                'idFieldName'      => 'id',
+                'entityRepository' => $entities['repositoryInterface']->getEntityName(),
+                'entityFactory'    => $entities['interface']->getEntityName() . 'Factory'
+            ]
+        );
+
 
         return $entities;
     }

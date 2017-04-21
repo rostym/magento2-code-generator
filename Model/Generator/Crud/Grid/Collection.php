@@ -31,10 +31,11 @@ class Collection extends AbstractGenerator
     /**
      * Generate entity
      *
+     * @param array $arguments
+     *
      * @return GeneratorResultInterface
-     * @throws \Zend\Code\Generator\Exception\InvalidArgumentException
      */
-    public function generate()
+    public function generate(array $arguments = [])
     {
         $classGenerator = new ClassGenerator();
         $classGenerator->setName($this->generateEntityName(self::GRID_COLLECTION_NAME_PATTERN));

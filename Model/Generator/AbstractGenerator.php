@@ -32,7 +32,7 @@ abstract class AbstractGenerator implements GeneratorInterface
      *
      * @param $moduleName
      */
-    public function __construct($moduleName)
+    public function __construct($moduleName = '')
     {
         $this->moduleName = $moduleName;
     }
@@ -45,5 +45,31 @@ abstract class AbstractGenerator implements GeneratorInterface
     protected function normalizeModuleName($moduleName)
     {
         return str_replace('/', '\\', $moduleName);
+    }
+
+    protected function checkArguments(array $arguments)
+    {
+        foreach ($this->requiredArguments() as $requiredArgument) {
+            if (array_key_exists($requiredArgument, $arguments)) {
+                continue;
+            }
+
+            throw new \InvalidArgumentException(sprintf('{%s} is required.', $requiredArgument));
+        }
+    }
+
+    protected function requiredArguments(): array
+    {
+        return [];
+    }
+
+    /**
+     * Get base path
+     *
+     * @return string
+     */
+    protected function getBasePath()
+    {
+        return BP;
     }
 }

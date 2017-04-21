@@ -52,10 +52,11 @@ class DataProvider extends AbstractGenerator
     /**
      * Generate entity
      *
+     * @param array $arguments
+     *
      * @return GeneratorResultInterface
-     * @throws \Zend\Code\Generator\Exception\InvalidArgumentException
      */
-    public function generate()
+    public function generate(array $arguments = [])
     {
         $classGenerator = new ClassGenerator();
         $classGenerator->setName($this->generateName());
@@ -169,24 +170,26 @@ class DataProvider extends AbstractGenerator
     private function getGetDataBody()
     {
         return sprintf(
-            '        if (isset($this->loadedData)) {
-            return $this->loadedData;
-        }
-        $items = $this->collection->getItems();
-        
-        foreach ($items as $item) {
-            $this->loadedData[$item->getId()] = $item->getData();
-        }
+            '
+if ($this->loadedData) {
+    return $this->loadedData;
+}
+$items = $this->collection->getItems();
 
-        $data = $this->dataPersistor->get(\'%1$s\');
-        if (!empty($data)) {
-            $item = $this->collection->getNewEmptyItem();
-            $item->setData($data);
-            $this->loadedData[$item->getId()] = $item->getData();
-            $this->dataPersistor->clear(\'%1$s\');
-        }
+foreach ($items as $item) {
+    $this->loadedData[$item->getId()] = $item->getData();
+}
 
-        return $this->loadedData;',
+$data = $this->dataPersistor->get(\'%1$s\');
+if (!empty($data)) {
+    $item = $this->collection->getNewEmptyItem();
+    $item->setData($data);
+    $this->loadedData[$item->getId()] = $item->getData();
+    $this->dataPersistor->clear(\'%1$s\');
+}
+
+return $this->loadedData;
+            ',
             str_replace('/', '_', mb_strtolower($this->moduleName)) .'_'. mb_strtolower($this->entityName)
         );
     }

@@ -56,10 +56,11 @@ class Listing extends AbstractGenerator
     /**
      * Generate entity
      *
+     * @param array $arguments
+     *
      * @return GeneratorResultInterface
-     * @throws \InvalidArgumentException
      */
-    public function generate()
+    public function generate(array $arguments = [])
     {
         $listing = new NodeBuilder('listing', [
             'xmlns:xsi'                     => 'http://www.w3.org/2001/XMLSchema-instance',
@@ -87,11 +88,11 @@ class Listing extends AbstractGenerator
                     ->argumentNode('class', 'string', DataProvider::class)
                     ->argumentNode('name', 'string', $this->generateDataSourceName())
                     ->argumentNode('primaryFieldName', 'string', $this->getPrimaryFieldName())
-                    ->argumentNode('requestFieldName', 'string', 'id')//todo
+                    ->argumentNode('requestFieldName', 'string', 'id')
                     ->argumentNode('data', 'array')->children()
                         ->itemNode('config', 'array')->children()
                             ->itemNode('component', 'string', 'Magento_Ui/js/grid/provider')
-                            ->itemNode('update_url', 'string', '', ['path' => 'mui/index/render'])
+                            ->itemNode('update_url', 'url', '', ['path' => 'mui/index/render'])
                             ->itemNode('storageConfig', 'array')->children()
                                 ->itemNode('indexField', 'string', $this->getPrimaryFieldName())
                             ->endNode()
@@ -194,6 +195,15 @@ class Listing extends AbstractGenerator
                     ->endNode()
                 ->endNode();
         }
+
+        $listing
+            ->elementNode('actionsColumn', ['name' => 'actions', 'class' => $arguments['actionsColumnClass']])->children()
+                ->argumentNode('data', 'array')->children()
+                    ->itemNode('config', 'array')->children()
+                        ->itemNode('indexField', 'string', $this->getPrimaryFieldName())
+                    ->endNode()
+                ->endNode()
+            ->endNode();
 
         return new GeneratorResult(
             $listing->toXml(),
@@ -333,7 +343,7 @@ class Listing extends AbstractGenerator
     private function getDestinationFile()
     {
         $normalizedModuleName = mb_strtolower(str_replace('/', '_', $this->moduleName));
-        $entityName = lcfirst($this->entityName);
+        $entityName = mb_strtolower($this->entityName);
 
         return sprintf(self::FILE, $this->moduleName, $normalizedModuleName, $entityName);
     }

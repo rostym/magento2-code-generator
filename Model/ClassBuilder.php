@@ -30,7 +30,7 @@ class ClassBuilder implements ClassBuilderInterface
     private $autoResolvingNamespaces = false;
 
     /** @var string[] */
-    private $implementedInterfaces;
+    private $implementedInterfaces = [];
 
     /** @var PropertyBuilderInterface[] */
     private $properties = [];

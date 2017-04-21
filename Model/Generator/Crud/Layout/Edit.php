@@ -38,9 +38,11 @@ class Edit extends AbstractLayout
     /**
      * Generate entity
      *
+     * @param array $arguments
+     *
      * @return GeneratorResultInterface
      */
-    public function generate()
+    public function generate(array $arguments = [])
     {
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $page = $this->generatePage($dom);
@@ -73,7 +75,7 @@ class Edit extends AbstractLayout
     protected function getUiComponentName()
     {
         $moduleName = mb_strtolower(str_replace('/', '_', $this->moduleName));
-        $entityName = lcfirst($this->entityName);
+        $entityName = strtolower($this->entityName);
 
         return sprintf('%s_%s_form', $moduleName, $entityName);
     }
@@ -84,7 +86,7 @@ class Edit extends AbstractLayout
     protected function getDestinationFile()
     {
         $normalizedModuleName = mb_strtolower(str_replace('/', '_', $this->moduleName));
-        $entityName = lcfirst($this->entityName);
+        $entityName = mb_strtolower($this->entityName);
 
         return sprintf(self::FILE, $this->moduleName, $normalizedModuleName, $entityName);
     }

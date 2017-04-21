@@ -58,12 +58,11 @@ class InterfacePart extends AbstractPart
     /**
      * Generate entity
      *
+     * @param array $arguments
+     *
      * @return GeneratorResult
-     * @throws \Zend\Code\Generator\Exception\RuntimeException
-     * @throws \Zend\Code\Generator\Exception\InvalidArgumentException
-     * @throws \InvalidArgumentException
      */
-    public function generate()
+    public function generate(array $arguments = [])
     {
         $interfaceGenerator = $this->createEntityGenerator();
         $interfaceGenerator->setName($this->generateEntityName(self::MODEL_INTERFACE_NAME_PATTERN));
