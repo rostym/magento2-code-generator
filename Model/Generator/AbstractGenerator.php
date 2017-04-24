@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
  * (c) 2016. Rostyslav Tymoshenko <krifollk@gmail.com>
@@ -9,6 +12,8 @@
 namespace Krifollk\CodeGenerator\Model\Generator;
 
 use Krifollk\CodeGenerator\Api\GeneratorInterface;
+use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
+use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 
 /**
  * Class AbstractGenerator
@@ -23,30 +28,25 @@ abstract class AbstractGenerator implements GeneratorInterface
     const DS = DIRECTORY_SEPARATOR;
 
     /**
-     * @var string
+     * @inheritdoc
+     * @throws \InvalidArgumentException
      */
-    protected $moduleName;
+    public function generate(
+        ModuleNameEntity $moduleNameEntity,
+        array $additionalArguments = []
+    ): GeneratorResultInterface {
+        $this->checkArguments($additionalArguments);
 
-    /**
-     * AbstractGenerator constructor.
-     *
-     * @param $moduleName
-     */
-    public function __construct($moduleName = '')
-    {
-        $this->moduleName = $moduleName;
+        return $this->internalGenerate($moduleNameEntity, $additionalArguments);
     }
 
     /**
-     * @param string $moduleName
+     * Checks that all required arguments passed
      *
-     * @return string
+     * @param array $arguments
+     *
+     * @throws \InvalidArgumentException
      */
-    protected function normalizeModuleName($moduleName)
-    {
-        return str_replace('/', '\\', $moduleName);
-    }
-
     protected function checkArguments(array $arguments)
     {
         foreach ($this->requiredArguments() as $requiredArgument) {
@@ -54,22 +54,27 @@ abstract class AbstractGenerator implements GeneratorInterface
                 continue;
             }
 
-            throw new \InvalidArgumentException(sprintf('{%s} is required.', $requiredArgument));
+            throw new \InvalidArgumentException(sprintf('{%s} is required. [%s]', $requiredArgument, get_class($this)));
         }
     }
 
-    protected function requiredArguments(): array
-    {
-        return [];
-    }
+    /**
+     * Return array of required arguments
+     *
+     * @return array
+     */
+    abstract protected function requiredArguments(): array;
 
     /**
-     * Get base path
+     * @param ModuleNameEntity $moduleNameEntity
+     * @param array            $additionalArguments
      *
-     * @return string
+     * @return GeneratorResultInterface
+     * @internal param array $arguments
+     *
      */
-    protected function getBasePath()
-    {
-        return BP;
-    }
+    abstract protected function internalGenerate(
+        ModuleNameEntity $moduleNameEntity,
+        array $additionalArguments = []
+    ): GeneratorResultInterface;
 }

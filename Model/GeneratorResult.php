@@ -1,7 +1,10 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
- * (c) 2016. Rostyslav Tymoshenko <krifollk@gmail.com>
+ * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
@@ -22,21 +25,21 @@ class GeneratorResult implements GeneratorResultInterface
      *
      * @var string
      */
-    private $content = '';
+    private $content;
 
     /**
      * Destination file
      *
      * @var string
      */
-    private $destinationFile = '';
+    private $destinationFile;
 
     /**
      * Entity name
      *
      * @var string
      */
-    private $entityName = '';
+    private $entityName;
 
     /**
      * GeneratorResult constructor.
@@ -45,7 +48,7 @@ class GeneratorResult implements GeneratorResultInterface
      * @param string $destinationFile
      * @param string $entityName
      */
-    public function __construct($content, $destinationFile, $entityName)
+    public function __construct(string $content, string $destinationFile, string $entityName = '')
     {
         $this->content = $content;
         $this->destinationFile = $destinationFile;
@@ -57,7 +60,7 @@ class GeneratorResult implements GeneratorResultInterface
      *
      * @return string
      */
-    public function getContent()
+    public function getContent(): string
     {
         return $this->content;
     }
@@ -67,7 +70,7 @@ class GeneratorResult implements GeneratorResultInterface
      *
      * @return string
      */
-    public function getDestinationDir()
+    public function getDestinationDir(): string
     {
         return dirname($this->getDestinationFile());
     }
@@ -77,7 +80,7 @@ class GeneratorResult implements GeneratorResultInterface
      *
      * @return string
      */
-    public function getDestinationFile()
+    public function getDestinationFile(): string
     {
         return $this->destinationFile;
     }
@@ -87,7 +90,7 @@ class GeneratorResult implements GeneratorResultInterface
      *
      * @return string
      */
-    public function getEntityName()
+    public function getEntityName(): string
     {
         return $this->entityName;
     }
