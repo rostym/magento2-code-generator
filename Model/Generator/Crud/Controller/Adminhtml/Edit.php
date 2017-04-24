@@ -38,10 +38,6 @@ class Edit extends AbstractAction
                 ->markAsPrivate()
             ->finishBuilding()
 
-            ->startPropertyBuilding('resultRedirectFactory')
-                ->markAsPrivate()
-            ->finishBuilding()
-
             ->startMethodBuilding('__construct', $this->getConstructorBody())
                 ->markAsPublic()
 
@@ -75,7 +71,6 @@ class Edit extends AbstractAction
         return '
 $this->resultPageFactory = $resultPageFactory;
 $this->entityRepository = $entityRepository;
-$this->resultRedirectFactory = $context->getResultRedirectFactory();
 parent::__construct($context);
     ';
     }
