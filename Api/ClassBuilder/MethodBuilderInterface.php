@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
  * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
@@ -62,6 +64,23 @@ interface MethodBuilderInterface
      * @return ClassBuilderInterface
      */
     public function finishBuilding();
+
+    /**
+     * @param string $content
+     *
+     * @return $this
+     */
+    public function withBody(string $content);
+
+    /**
+     * @return \Krifollk\CodeGenerator\Model\ClassBuilder\MethodBuilder\DocBlock
+     */
+    public function startDocBlockBuilding();
+
+    /**
+     * @return $this
+     */
+    public function addArgument(string $name, string $type = '', $value = '__null__');
 
     /**
      * Build

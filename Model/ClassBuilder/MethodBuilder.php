@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
  * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
@@ -16,6 +18,7 @@ use Krifollk\CodeGenerator\Model\ClassBuilder\MethodBuilder\ArgumentBuilder;
 use Magento\Framework\Code\Generator\InterfaceMethodGenerator;
 use Zend\Code\Generator\AbstractMemberGenerator;
 use Zend\Code\Generator\MethodGenerator;
+use Zend\Code\Generator\ParameterGenerator;
 
 /**
  * Class MethodBuilder
@@ -33,6 +36,9 @@ class MethodBuilder implements MethodBuilderInterface
     /** @var ArgumentBuilderInterface[] */
     private $arguments = [];
 
+    /** @var \Krifollk\CodeGenerator\Model\ClassBuilder\MethodBuilder\DocBlock  */
+    private $docBlockBuilder;
+
     /**
      * MethodBuilder constructor.
      *
@@ -43,7 +49,7 @@ class MethodBuilder implements MethodBuilderInterface
     public function __construct($name, $body, ClassBuilderInterface $classBuilder)
     {
         $this->classBuilder = $classBuilder;
-        $this->initMethodGenerator();
+        $this->methodGenerator = new MethodGenerator();
         $this->methodGenerator->setName($name);
         $this->methodGenerator->setBody($body);
     }
@@ -88,6 +94,34 @@ class MethodBuilder implements MethodBuilderInterface
         return $this;
     }
 
+    public function withBody(string $content)
+    {
+        $this->methodGenerator->setBody($content);
+
+        return $this;
+    }
+
+    public function startDocBlockBuilding()
+    {
+        $this->docBlockBuilder = new \Krifollk\CodeGenerator\Model\ClassBuilder\MethodBuilder\DocBlock($this);
+
+        return $this->docBlockBuilder;
+    }
+
+    public function addArgument(string $name, string $type = '', $value = '__null__')
+    {
+        $argument = new ParameterGenerator();
+        $argument->setName($name)->setType($type);
+
+        if ($value !== '__null__') {
+            $argument->setDefaultValue($value);
+        }
+
+        $this->methodGenerator->setParameter($argument);
+
+        return $this;
+    }
+
     /**
      * @inheritdoc
      */
@@ -102,24 +136,15 @@ class MethodBuilder implements MethodBuilderInterface
      */
     public function build()
     {
+        if ($this->docBlockBuilder) {
+            $this->methodGenerator->setDocBlock($this->docBlockBuilder->build());
+        }
+
         foreach ($this->arguments as $argument) {
             $this->methodGenerator->setParameter($argument->build());
         }
 
         return $this->methodGenerator;
-    }
-
-    /**
-     * Initialize method generator object
-     */
-    private function initMethodGenerator()
-    {
-        if ($this->classBuilder->isInterface()) {
-            $this->methodGenerator = new InterfaceMethodGenerator();
-            return;
-        }
-
-        $this->methodGenerator = new MethodGenerator();
     }
 
     /**

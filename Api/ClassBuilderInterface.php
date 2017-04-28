@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
  * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
@@ -11,6 +13,7 @@ namespace Krifollk\CodeGenerator\Api;
 
 use Krifollk\CodeGenerator\Api\ClassBuilder\MethodBuilderInterface;
 use Krifollk\CodeGenerator\Api\ClassBuilder\PropertyBuilderInterface;
+use Krifollk\CodeGenerator\Model\ClassBuilder\DocBlock;
 
 /**
  * Interface ClassBuilderInterface
@@ -98,11 +101,9 @@ interface ClassBuilderInterface
     public function usesNamespace($name);
 
     /**
-     * Is Interface
-     *
-     * @return bool
+     * @return DocBlock
      */
-    public function isInterface();
+    public function startDocBlockBuilding();
 
     /**
      * Build

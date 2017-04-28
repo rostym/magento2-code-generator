@@ -12,6 +12,7 @@ namespace Krifollk\CodeGenerator\Model;
 use Krifollk\CodeGenerator\Api\ClassBuilder\MethodBuilderInterface;
 use Krifollk\CodeGenerator\Api\ClassBuilder\PropertyBuilderInterface;
 use Krifollk\CodeGenerator\Api\ClassBuilderInterface;
+use Krifollk\CodeGenerator\Model\ClassBuilder\DocBlock;
 use Krifollk\CodeGenerator\Model\ClassBuilder\MethodBuilder;
 use Krifollk\CodeGenerator\Model\ClassBuilder\PropertyBuilder;
 use Magento\Framework\Code\Generator\ClassGenerator;
@@ -24,7 +25,7 @@ use Magento\Framework\Code\Generator\ClassGenerator;
 class ClassBuilder implements ClassBuilderInterface
 {
     /** @var ClassGenerator */
-    private $classGeneratorObject;
+    private $generatorObject;
 
     /** @var bool */
     private $autoResolvingNamespaces = false;
@@ -41,6 +42,9 @@ class ClassBuilder implements ClassBuilderInterface
     /** @var bool */
     private $isInterface;
 
+    /** @var DocBlock */
+    private $docBlockBuilder;
+
     /**
      * ClassBuilder constructor.
      *
@@ -50,8 +54,15 @@ class ClassBuilder implements ClassBuilderInterface
     public function __construct($className, $isInterface = false)
     {
         $this->isInterface = $isInterface;
-        $this->initGenerator();
-        $this->classGeneratorObject->setName($className);
+        $this->generatorObject = new ClassGenerator();
+        $this->generatorObject->setName($className);
+    }
+
+    public function startDocBlockBuilding()
+    {
+        $this->docBlockBuilder = new DocBlock($this);
+
+        return $this->docBlockBuilder;
     }
 
     /**
@@ -59,7 +70,7 @@ class ClassBuilder implements ClassBuilderInterface
      */
     public function markAsAbstract()
     {
-        $this->classGeneratorObject->setAbstract(true);
+        $this->generatorObject->setAbstract(true);
 
         return $this;
     }
@@ -69,7 +80,7 @@ class ClassBuilder implements ClassBuilderInterface
      */
     public function markAsFinal()
     {
-        $this->classGeneratorObject->setFinal(true);
+        $this->generatorObject->setFinal(true);
 
         return $this;
     }
@@ -79,7 +90,7 @@ class ClassBuilder implements ClassBuilderInterface
      */
     public function extendedFrom($className)
     {
-        $this->classGeneratorObject->setExtendedClass($className);
+        $this->generatorObject->setExtendedClass($className);
 
         return $this;
     }
@@ -129,17 +140,23 @@ class ClassBuilder implements ClassBuilderInterface
      */
     public function build()
     {
-        $this->classGeneratorObject->setImplementedInterfaces($this->implementedInterfaces);
+        if ($this->implementedInterfaces) {
+            $this->generatorObject->setImplementedInterfaces($this->implementedInterfaces);
+        }
+
+        if ($this->docBlockBuilder) {
+            $this->generatorObject->setDocBlock($this->docBlockBuilder->build());
+        }
 
         foreach ($this->properties as $property) {
-            $this->classGeneratorObject->addPropertyFromGenerator($property->build());
+            $this->generatorObject->addPropertyFromGenerator($property->build());
         }
 
         foreach ($this->methods as $method) {
-            $this->classGeneratorObject->addMethodFromGenerator($method->build());
+            $this->generatorObject->addMethodFromGenerator($method->build());
         }
 
-        return $this->classGeneratorObject;
+        return $this->generatorObject;
     }
 
     /**
@@ -156,19 +173,6 @@ class ClassBuilder implements ClassBuilderInterface
         $this->methods[$name] = $methodBuilder;
 
         return $methodBuilder;
-    }
-
-    /**
-     * Initialize generator object
-     */
-    private function initGenerator()
-    {
-        if (!$this->isInterface) {
-            $this->classGeneratorObject = new ClassGenerator();
-            return;
-        }
-
-        $this->classGeneratorObject = new InterfaceGenerator();
     }
 
     /**
@@ -190,7 +194,21 @@ class ClassBuilder implements ClassBuilderInterface
      */
     public function usesNamespace($name)
     {
-        $this->classGeneratorObject->setNamespaceName($name);
+        $this->generatorObject->setNamespaceName($name);
+
+        return $this;
+    }
+
+    public function addConstant(string $name, string $value)
+    {
+        $this->generatorObject->addConstant($name, $value);
+
+        return $this;
+    }
+
+    public function addUse($use)
+    {
+        $this->generatorObject->addUse($use);
 
         return $this;
     }
