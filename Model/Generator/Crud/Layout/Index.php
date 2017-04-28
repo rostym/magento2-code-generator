@@ -38,11 +38,12 @@ class Index extends AbstractLayout
     /**
      * Generate entity
      *
-     * @param array $arguments
+     * @param ModuleNameEntity|\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity
+     * @param array                                                           $additionalArguments
      *
      * @return GeneratorResultInterface
      */
-    public function generate(array $arguments = [])
+    public function generate(\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity, array $additionalArguments = [])
     {
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $page = $this->generatePage($dom);

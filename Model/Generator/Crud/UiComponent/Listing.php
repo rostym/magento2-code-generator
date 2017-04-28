@@ -56,11 +56,12 @@ class Listing extends AbstractGenerator
     /**
      * Generate entity
      *
-     * @param array $arguments
+     * @param ModuleNameEntity|\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity
+     * @param array                                                           $additionalArguments
      *
      * @return GeneratorResultInterface
      */
-    public function generate(array $arguments = [])
+    public function generate(\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity, array $additionalArguments = [])
     {
         $listing = new NodeBuilder('listing', [
             'xmlns:xsi'                     => 'http://www.w3.org/2001/XMLSchema-instance',
@@ -197,7 +198,7 @@ class Listing extends AbstractGenerator
         }
 
         $listing
-            ->elementNode('actionsColumn', ['name' => 'actions', 'class' => $arguments['actionsColumnClass']])->children()
+            ->elementNode('actionsColumn', ['name' => 'actions', 'class' => $additionalArguments['actionsColumnClass']])->children()
                 ->argumentNode('data', 'array')->children()
                     ->itemNode('config', 'array')->children()
                         ->itemNode('indexField', 'string', $this->getPrimaryFieldName())

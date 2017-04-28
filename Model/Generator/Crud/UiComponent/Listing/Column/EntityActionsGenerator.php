@@ -1,10 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
+/**
+ * This file is part of Code Generator for Magento.
+ * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent\Listing\Column;
 
+use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
 use Krifollk\CodeGenerator\Model\ClassBuilder;
 use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
+use Krifollk\CodeGenerator\Model\ModuleNameEntity;
+use Krifollk\CodeGenerator\Model\TableDescriber\Result;
 use Zend\Code\Generator\FileGenerator;
 
 /**
@@ -12,27 +24,38 @@ use Zend\Code\Generator\FileGenerator;
  *
  * @package Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent\Listing\Column
  */
-class EntityActions extends AbstractGenerator
+class EntityActionsGenerator extends AbstractGenerator
 {
-    const FILE_PATH_PATTERN = '%s/app/code/%s/Model/UiComponent/Listing/Column/%sActions.php';
-    const ENTITY_NAME_PATTERN = '\%s\Model\UiComponent\Listing\Column\%sActions';
     const NAMESPACE_PATTERN = '\%s\Model\UiComponent\Listing\Column';
 
     /**
      * @inheritdoc
      */
-    public function generate(array $arguments = [])
+    protected function requiredArguments(): array
     {
-        $this->checkArguments($arguments);
+        return ['entityName', 'tableDescriberResult'];
+    }
 
-        $classGenerator = new ClassBuilder($this->generateEntityName($arguments['moduleName'], $arguments['entityName']));
-        $deleteUrl = $this->getActionUrl($arguments['moduleName'], $arguments['entityName'], 'delete');
-        $editUrl = $this->getActionUrl($arguments['moduleName'], $arguments['entityName'], 'edit');
+    /**
+     * @inheritdoc
+     */
+    protected function internalGenerate(
+        ModuleNameEntity $moduleNameEntity,
+        array $additionalArguments = []
+    ): GeneratorResultInterface {
+        $entityName = $additionalArguments['entityName'];
+        /** @var Result $tableDescriberResult */
+        $tableDescriberResult = $additionalArguments['tableDescriberResult'];
+
+        $className = sprintf('\%s\Model\UiComponent\Listing\Column\%sActions', $moduleNameEntity->asPartOfNamespace(), $entityName);
+
+        $classGenerator = new ClassBuilder($className);
+        $deleteUrl = $this->getActionUrl($moduleNameEntity, $entityName, 'delete');
+        $editUrl = $this->getActionUrl($moduleNameEntity, $entityName, 'edit');
 
         /** @var \Magento\Framework\Code\Generator\ClassGenerator $generator */
         $generator = $classGenerator
             ->extendedFrom('\Magento\Ui\Component\Listing\Columns\Column')
-            ->usesNamespace($this->generateNamespace($arguments['moduleName']))
             ->startPropertyBuilding('urlBuilder')
                 ->markAsPrivate()
             ->finishBuilding()
@@ -62,10 +85,9 @@ class EntityActions extends AbstractGenerator
                 ->finishBuilding()
 
             ->finishBuilding()
-            ->startMethodBuilding(
-                    'prepareDataSource',
-                    $this->getPrepareDataSourceBody($arguments['idFieldName'], $editUrl, $deleteUrl)
-                )
+            ->startMethodBuilding('prepareDataSource',
+                $this->getPrepareDataSourceBody($tableDescriberResult->primaryColumn()->name(), $editUrl, $deleteUrl)
+            )
                 ->markAsPublic()
                 ->startArgumentBuilding('dataSource')
                     ->type('array')
@@ -73,10 +95,13 @@ class EntityActions extends AbstractGenerator
             ->finishBuilding()
             ->build();
 
+        $fileGenerator = new FileGenerator();
+        $fileGenerator->setClass($generator);
+
         return new GeneratorResult(
-            $this->wrapToFile($generator)->generate(),
-            $this->generateFilePath($arguments['moduleName'], $arguments['entityName']),
-            $this->generateEntityName($arguments['moduleName'], $arguments['entityName'])
+            $fileGenerator->generate(),
+            sprintf('%s/Model/UiComponent/Listing/Column/%sActions.php', $moduleNameEntity->asPartOfPath(), $entityName),
+            $className
         );
     }
 
@@ -88,41 +113,9 @@ parent::__construct($context, $uiComponentFactory, $components, $data);
         ';
     }
 
-    protected function generateFilePath($moduleName, $entityName)
+    private function getActionUrl(ModuleNameEntity $moduleName, $entityName, $action): string
     {
-        return sprintf(self::FILE_PATH_PATTERN, $this->getBasePath(), $moduleName, $entityName);
-    }
-
-    protected function generateEntityName($moduleName, $entityName)
-    {
-        return sprintf(self::ENTITY_NAME_PATTERN, str_replace('/', '\\', $moduleName), $entityName);
-    }
-
-    protected function generateNamespace($moduleName)
-    {
-        return sprintf(self::NAMESPACE_PATTERN, str_replace('/', '\\', $moduleName));
-    }
-
-    protected function requiredArguments(): array
-    {
-        return ['moduleName', 'entityName', 'idFieldName'];
-    }
-
-    private function wrapToFile($generatorObject)
-    {
-        $fileGenerator = new FileGenerator();
-        $fileGenerator->setClass($generatorObject);
-
-        return $fileGenerator;
-    }
-
-    private function getActionUrl($moduleName, $entityName, $action)
-    {
-        return sprintf(
-            '%s/%s/%s',
-            str_replace('/', '_', mb_strtolower($moduleName)), mb_strtolower($entityName),
-            $action
-        );
+        return sprintf('%s/%s/%s', mb_strtolower($moduleName->value()), mb_strtolower($entityName), $action);
     }
 
     private function getPrepareDataSourceBody($idFieldName, $editUrlPath, $deleteUrlPath)

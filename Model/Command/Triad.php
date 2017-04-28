@@ -48,7 +48,7 @@ class Triad extends AbstractCommand
     private $repositoryGenerator;
 
     /** @var TableDescriber */
-    private $tableDescriber;
+    protected $tableDescriber;
 
     public function __construct(
         EntityGenerator $entityGenerator,

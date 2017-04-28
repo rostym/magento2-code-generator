@@ -31,11 +31,12 @@ class Collection extends AbstractGenerator
     /**
      * Generate entity
      *
-     * @param array $arguments
+     * @param ModuleNameEntity|\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity
+     * @param array                                                           $additionalArguments
      *
      * @return GeneratorResultInterface
      */
-    public function generate(array $arguments = [])
+    public function generate(\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity, array $additionalArguments = [])
     {
         $classGenerator = new ClassGenerator();
         $classGenerator->setName($this->generateEntityName(self::GRID_COLLECTION_NAME_PATTERN));

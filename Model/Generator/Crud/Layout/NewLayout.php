@@ -39,11 +39,12 @@ class NewLayout extends AbstractLayout
     /**
      * Generate entity
      *
-     * @param array $arguments
+     * @param ModuleNameEntity|\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity
+     * @param array                                                           $additionalArguments
      *
      * @return GeneratorResultInterface
      */
-    public function generate(array $arguments = [])
+    public function generate(\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity, array $additionalArguments = [])
     {
         $new = new NodeBuilder('page', [
             'xmlns:xsi'                     => 'http://www.w3.org/2001/XMLSchema-instance',

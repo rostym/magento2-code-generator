@@ -16,11 +16,11 @@ abstract class AbstractAction implements GeneratorInterface
     const ENTITY_NAME_PATTERN = '\%s\Controller\Adminhtml\%s\%s';
     const NAMESPACE_PATTERN = '\%s\Controller\Adminhtml\%s';
 
-    public function generate(array $arguments = [])
+    public function generate(\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity, array $additionalArguments = [])
     {
-        $this->checkArguments($arguments);
+        $this->checkArguments($additionalArguments);
 
-        return $this->internalGenerate($arguments);
+        return $this->internalGenerate($additionalArguments);
     }
 
     protected function checkArguments(array $arguments)

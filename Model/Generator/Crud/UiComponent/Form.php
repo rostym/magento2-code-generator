@@ -39,11 +39,12 @@ class Form extends \Krifollk\CodeGenerator\Model\Generator\AbstractGenerator
     /**
      * Generate entity
      *
-     * @param array $arguments
+     * @param ModuleNameEntity|\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity
+     * @param array                                                           $additionalArguments
      *
      * @return GeneratorResultInterface
      */
-    public function generate(array $arguments = [])
+    public function generate(\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity, array $additionalArguments = [])
     {
         $form = new NodeBuilder('form', [
             'xmlns:xsi'                     => 'http://www.w3.org/2001/XMLSchema-instance',
@@ -108,7 +109,7 @@ class Form extends \Krifollk\CodeGenerator\Model\Generator\AbstractGenerator
             ->endNode()
             ->elementNode('dataSource', ['name' => $this->generateProviderName()])->children()
                 ->argumentNode('dataProvider', 'configurableObject')->children()
-                    ->argumentNode('class', 'string', $arguments['dataProvider'])
+                    ->argumentNode('class', 'string', $additionalArguments['dataProvider'])
                     ->argumentNode('name', 'string', $this->generateProviderName())
                     ->argumentNode('primaryFieldName', 'string', $this->getPrimaryFieldName())
                     ->argumentNode('requestFieldName', 'string', $this->getPrimaryFieldName())

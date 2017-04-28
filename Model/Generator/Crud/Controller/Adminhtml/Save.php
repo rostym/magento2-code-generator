@@ -20,11 +20,11 @@ use Krifollk\CodeGenerator\Model\GeneratorResult;
  */
 class Save extends AbstractAction
 {
-    public function generate(array $arguments = [])
+    public function generate(\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity, array $additionalArguments = [])
     {
-        $this->checkArguments($arguments);
+        $this->checkArguments($additionalArguments);
 
-        return $this->internalGenerate($arguments);
+        return $this->internalGenerate($additionalArguments);
     }
 
     protected function internalGenerate(array $arguments)
