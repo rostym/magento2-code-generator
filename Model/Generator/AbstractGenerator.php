@@ -70,8 +70,6 @@ abstract class AbstractGenerator implements GeneratorInterface
      * @param array            $additionalArguments
      *
      * @return GeneratorResultInterface
-     * @internal param array $arguments
-     *
      */
     abstract protected function internalGenerate(
         ModuleNameEntity $moduleNameEntity,

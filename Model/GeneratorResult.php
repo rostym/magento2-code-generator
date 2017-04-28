@@ -20,26 +20,17 @@ use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
  */
 class GeneratorResult implements GeneratorResultInterface
 {
-    /**
-     * File Content
-     *
-     * @var string
-     */
+    /** @var string */
     private $content;
 
-    /**
-     * Destination file
-     *
-     * @var string
-     */
+    /** @var string */
     private $destinationFile;
 
-    /**
-     * Entity name
-     *
-     * @var string
-     */
+    /** @var string */
     private $entityName;
+
+    /** @var array */
+    private $exposedMessages;
 
     /**
      * GeneratorResult constructor.
@@ -47,51 +38,42 @@ class GeneratorResult implements GeneratorResultInterface
      * @param string $content
      * @param string $destinationFile
      * @param string $entityName
+     * @param array  $exposedMessages
      */
-    public function __construct(string $content, string $destinationFile, string $entityName = '')
-    {
+    public function __construct(
+        string $content,
+        string $destinationFile,
+        string $entityName = '',
+        array $exposedMessages = []
+    ) {
         $this->content = $content;
         $this->destinationFile = $destinationFile;
         $this->entityName = $entityName;
+        $this->exposedMessages = $exposedMessages;
     }
 
-    /**
-     * Get content
-     *
-     * @return string
-     */
     public function getContent(): string
     {
         return $this->content;
     }
 
-    /**
-     * Get destination dir
-     *
-     * @return string
-     */
     public function getDestinationDir(): string
     {
         return dirname($this->getDestinationFile());
     }
 
-    /**
-     * Get destination file
-     *
-     * @return string
-     */
     public function getDestinationFile(): string
     {
         return $this->destinationFile;
     }
 
-    /**
-     * Get entity name
-     *
-     * @return string
-     */
     public function getEntityName(): string
     {
         return $this->entityName;
+    }
+
+    public function getExposedMessages(): array
+    {
+        return $this->exposedMessages;
     }
 }

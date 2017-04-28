@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Krifollk\CodeGenerator\Model\Generator;
 
-use InvalidArgumentException;
+use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 
 /**
  * Class NameUtil
@@ -15,35 +17,28 @@ final class NameUtil
     {
     }
 
-    /**
-     * @param string $moduleName
-     * @param string $entityName
-     *
-     * @return string
-     * @throws \InvalidArgumentException
-     */
-    public static function generateDataSourceName($moduleName, $entityName)
+    public static function generateDataSourceName(ModuleNameEntity $moduleNameEntity, $entityName): string
     {
-        self::validateModuleName($moduleName);
-        return sprintf('%s_data_source', self::generateListingName($moduleName, $entityName));
+        return sprintf('%s_data_source', self::generateListingName($moduleNameEntity, $entityName));
     }
 
-    private static function validateModuleName($moduleName)
+    public static function generateListingName(ModuleNameEntity $moduleNameEntity, string $entityName): string
     {
-        if (!preg_match('/[A-Z]+[A-Za-z0-9]+_[A-Z]+[A-Z0-9a-z]+/', $moduleName)) {
-            throw new InvalidArgumentException('Wrong module name. Example: Test_Module');
-        }
+        return sprintf('%s_%s_listing', strtolower($moduleNameEntity->value()), mb_strtolower($entityName));
     }
 
-    /**
-     * @param string $moduleName
-     * @param string $entityName
-     *
-     * @return string
-     */
-    public static function generateListingName($moduleName, $entityName)
+    public static function camelize(string $columnName): string
     {
-        self::validateModuleName($moduleName);
-        return sprintf('%s_%s_listing', strtolower($moduleName), mb_strtolower($entityName));
+        return str_replace('_', '', ucwords($columnName, '_'));
+    }
+
+    public static function generateResourceName(ModuleNameEntity $moduleNameEntity, string $entityName): string
+    {
+        return sprintf('\%s\Model\ResourceModel\%s', $moduleNameEntity->asPartOfNamespace(), $entityName);
+    }
+
+    public static function generateCollectionName(ModuleNameEntity $moduleNameEntity, $entityName): string
+    {
+        return sprintf('\%s\Model\ResourceModel\%s\Collection', $moduleNameEntity->asPartOfNamespace(), $entityName);
     }
 }
