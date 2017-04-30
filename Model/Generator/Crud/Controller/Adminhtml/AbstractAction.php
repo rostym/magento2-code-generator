@@ -1,8 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
+/**
+ * This file is part of Code Generator for Magento.
+ * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml;
 
-use Krifollk\CodeGenerator\Api\GeneratorInterface;
+use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
+use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Zend\Code\Generator\FileGenerator;
 
 /**
@@ -10,35 +20,11 @@ use Zend\Code\Generator\FileGenerator;
  *
  * @package Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml
  */
-abstract class AbstractAction implements GeneratorInterface
+abstract class AbstractAction extends AbstractGenerator
 {
-    const FILE_PATH_PATTERN = '%s/app/code/%s/Controller/Adminhtml/%s/%s.php';
-    const ENTITY_NAME_PATTERN = '\%s\Controller\Adminhtml\%s\%s';
-    const NAMESPACE_PATTERN = '\%s\Controller\Adminhtml\%s';
-
-    public function generate(\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity, array $additionalArguments = [])
+    protected function requiredArguments(): array
     {
-        $this->checkArguments($additionalArguments);
-
-        return $this->internalGenerate($additionalArguments);
-    }
-
-    protected function checkArguments(array $arguments)
-    {
-        foreach ($this->requiredArguments() as $requiredArgument) {
-            if (array_key_exists($requiredArgument, $arguments)) {
-                continue;
-            }
-
-            throw new \InvalidArgumentException(sprintf('{%s} is required.', $requiredArgument));
-        }
-    }
-
-    abstract protected function internalGenerate(array $arguments);
-
-    protected function requiredArguments()
-    {
-        return ['moduleName', 'entityName'];
+        return ['entityName'];
     }
 
     protected function wrapToFile($generatorObject)
@@ -49,23 +35,34 @@ abstract class AbstractAction implements GeneratorInterface
         return $fileGenerator;
     }
 
-    protected function generateFilePath($moduleName, $entityName, $actionName)
-    {
-        return sprintf(self::FILE_PATH_PATTERN, $this->getBasePath(), $moduleName, $entityName, $actionName);
+    protected function generateFilePath(
+        ModuleNameEntity $moduleNameEntity,
+        string $entityName,
+        string $actionName
+    ): string {
+        return sprintf(
+            '%s/Controller/Adminhtml/%s/%s.php',
+            $moduleNameEntity->asPartOfPath(),
+            $entityName,
+            $actionName
+        );
     }
 
-    protected function generateEntityName($moduleName, $entityName, $actionName)
-    {
-        return sprintf(self::ENTITY_NAME_PATTERN, str_replace('/', '\\', $moduleName), $entityName, $actionName);
+    protected function generateEntityName(
+        ModuleNameEntity $moduleNameEntity,
+        string $entityName,
+        string $actionName
+    ): string {
+        return sprintf(
+            '\%s\Controller\Adminhtml\%s\%s',
+            $moduleNameEntity->asPartOfNamespace(),
+            $entityName,
+            $actionName
+        );
     }
 
-    protected function generateNamespace($moduleName, $entityName)
+    protected function generateNamespace(ModuleNameEntity $moduleNameEntity, string $entityName): string
     {
-        return sprintf(self::NAMESPACE_PATTERN, str_replace('/', '\\', $moduleName), $entityName);
-    }
-
-    private function getBasePath()
-    {
-        return BP;
+        return sprintf('\%s\Controller\Adminhtml\%s', $moduleNameEntity->asPartOfNamespace(), $entityName);
     }
 }

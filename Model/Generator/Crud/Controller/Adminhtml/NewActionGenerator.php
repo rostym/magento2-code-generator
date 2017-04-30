@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
  * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
@@ -10,27 +13,33 @@ namespace Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
 use Krifollk\CodeGenerator\Model\ClassBuilder;
-use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
+use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 
 /**
- * Class NewAction
+ * Class NewActionGenerator
  *
  * @package Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml
  */
-class NewAction extends AbstractAction
+class NewActionGenerator extends AbstractAction
 {
-    protected function internalGenerate(array $arguments)
-    {
-        /** @var ClassBuilder $classGenerator */
+    /**
+     * @inheritdoc
+     */
+    protected function internalGenerate(
+        ModuleNameEntity $moduleNameEntity,
+        array $additionalArguments = []
+    ): GeneratorResultInterface {
+        $entityName = $additionalArguments['entityName'];
+
         $classGenerator = new ClassBuilder(
-            $this->generateEntityName($arguments['moduleName'], $arguments['entityName'], 'NewAction')
+            $this->generateEntityName($moduleNameEntity, $entityName, 'NewAction')
         );
 
         /** @var \Magento\Framework\Code\Generator\ClassGenerator $generator */
         $generator = $classGenerator
             ->extendedFrom('\Magento\Backend\App\Action')
-            ->usesNamespace($this->generateNamespace($arguments['moduleName'], $arguments['entityName']))
+            ->usesNamespace($this->generateNamespace($moduleNameEntity, $entityName))
             ->startPropertyBuilding('resultForwardFactory')
                 ->markAsPrivate()
             ->finishBuilding()
@@ -50,12 +59,12 @@ class NewAction extends AbstractAction
 
         return new GeneratorResult(
             $this->wrapToFile($generator)->generate(),
-            $this->generateFilePath($arguments['moduleName'], $arguments['entityName'], 'NewAction'),
-            $this->generateEntityName($arguments['moduleName'], $arguments['entityName'], 'NewAction')
+            $this->generateFilePath($moduleNameEntity, $entityName, 'NewAction'),
+            $this->generateEntityName($moduleNameEntity, $entityName, 'NewAction')
         );
     }
 
-    private function getExecuteBody()
+    private function getExecuteBody(): string
     {
         return '
 /** @var \Magento\Framework\Controller\Result\Forward $resultForward */
@@ -64,7 +73,7 @@ return $resultForward->forward(\'edit\');
         ';
     }
 
-    private function getConstructorBody()
+    private function getConstructorBody(): string
     {
         return '
 $this->resultForwardFactory = $resultForwardFactory;

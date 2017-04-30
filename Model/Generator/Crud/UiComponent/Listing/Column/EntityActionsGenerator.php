@@ -105,7 +105,7 @@ class EntityActionsGenerator extends AbstractGenerator
         );
     }
 
-    private function getConstructorBody()
+    private function getConstructorBody(): string
     {
         return '
 $this->urlBuilder = $urlBuilder;
@@ -113,12 +113,12 @@ parent::__construct($context, $uiComponentFactory, $components, $data);
         ';
     }
 
-    private function getActionUrl(ModuleNameEntity $moduleName, $entityName, $action): string
+    private function getActionUrl(ModuleNameEntity $moduleName, string $entityName, string $action): string
     {
         return sprintf('%s/%s/%s', mb_strtolower($moduleName->value()), mb_strtolower($entityName), $action);
     }
 
-    private function getPrepareDataSourceBody($idFieldName, $editUrlPath, $deleteUrlPath)
+    private function getPrepareDataSourceBody(string $idFieldName, string $editUrlPath, string $deleteUrlPath): string
     {
         return "
 if (!isset(\$dataSource['data']['items'])) {

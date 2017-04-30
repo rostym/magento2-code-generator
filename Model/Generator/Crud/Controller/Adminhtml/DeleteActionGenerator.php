@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
  * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
@@ -10,24 +13,29 @@ namespace Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
 use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
+use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 
 /**
- * Class InlineEdit
+ * Class DeleteActionGenerator
  *
  * @package Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml
  */
-class InlineEdit extends AbstractGenerator
+class DeleteActionGenerator extends AbstractGenerator
 {
     /**
-     * Generate entity
-     *
-     * @param ModuleNameEntity|\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity
-     * @param array                                                           $additionalArguments
-     *
-     * @return GeneratorResultInterface
+     * @inheritdoc
      */
-    public function generate(\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity, array $additionalArguments = [])
+    protected function requiredArguments(): array
     {
-        // TODO: Implement generate() method.
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function internalGenerate(
+        ModuleNameEntity $moduleNameEntity,
+        array $additionalArguments = []
+    ): GeneratorResultInterface {
+        // TODO: Implement internalGenerate() method.
     }
 }

@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
  * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
@@ -9,43 +12,51 @@
 namespace Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
+use Krifollk\CodeGenerator\Model\Generator\NameUtil;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
+use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Krifollk\CodeGenerator\Model\NodeBuilder;
-use Krifollk\CodeGenerator\Model\TableInfoFactory;
+use Krifollk\CodeGenerator\Model\TableDescriber\Result;
 
-class Form extends \Krifollk\CodeGenerator\Model\Generator\AbstractGenerator
+/**
+ * Class Form
+ *
+ * @package Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent
+ */
+class FormGenerator extends \Krifollk\CodeGenerator\Model\Generator\AbstractGenerator
 {
-    const FILE = BP . '/app/code/%s/view/adminhtml/ui_component/%s.xml';
-
-    private $entityName;
-    private $tableName;
-    private $tableInfoFactory;
-    private $columns;
-
     /**
-     * @param string           $moduleName
-     * @param string           $entityName
-     * @param string           $tableName
-     * @param TableInfoFactory $tableInfoFactory
+     * @inheritdoc
      */
-    public function __construct($moduleName, $entityName, $tableName, TableInfoFactory $tableInfoFactory)
+    protected function requiredArguments(): array
     {
-        parent::__construct($moduleName);
-        $this->entityName = $entityName;
-        $this->tableName = $tableName;
-        $this->tableInfoFactory = $tableInfoFactory;
+        return ['entityName', 'tableDescriberResult'];
     }
 
     /**
-     * Generate entity
-     *
-     * @param ModuleNameEntity|\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity
-     * @param array                                                           $additionalArguments
-     *
-     * @return GeneratorResultInterface
+     * @inheritdoc
      */
-    public function generate(\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity, array $additionalArguments = [])
-    {
+    protected function internalGenerate(
+        ModuleNameEntity $moduleNameEntity,
+        array $additionalArguments = []
+    ): GeneratorResultInterface {
+        $entityName = $additionalArguments['entityName'];
+        /** @var Result $tableDescriberResult */
+        $tableDescriberResult = $additionalArguments['tableDescriberResult'];
+        $exposedMessages = [];
+
+        $destinationFile = sprintf(
+            '%s/view/adminhtml/ui_component/%s.xml',
+            $moduleNameEntity->asPartOfPath(),
+            $this->generateNamespaceName($moduleNameEntity, $entityName)
+        );
+        try {
+            $primaryFieldName = $tableDescriberResult->primaryColumn()->name();
+        } catch (\RuntimeException $e) {
+            $exposedMessages[] = '';//todo
+            $primaryFieldName = '<--COLUMN_NAME->';
+        }
+
         $form = new NodeBuilder('form', [
             'xmlns:xsi'                     => 'http://www.w3.org/2001/XMLSchema-instance',
             'xsi:noNamespaceSchemaLocation' => 'urn:magento:module:Magento_Ui:etc/ui_configuration.xsd'
@@ -54,13 +65,13 @@ class Form extends \Krifollk\CodeGenerator\Model\Generator\AbstractGenerator
         $form
             ->argumentNode('data', 'array')->children()
                 ->itemNode('js_config', 'array')->children()
-                    ->itemNode('provider', 'string', $this->generateJsConfigProviderName())
-                    ->itemNode('deps', 'string', $this->generateJsConfigDepsName())
+                    ->itemNode('provider', 'string', $this->generateJsConfigProviderName($moduleNameEntity, $entityName))
+                    ->itemNode('deps', 'string', $this->generateJsConfigDepsName($moduleNameEntity, $entityName))
                 ->endNode()
                 ->itemNode('label', 'string', 'General Information', ['translate' => 'true'])
                 ->itemNode('config', 'array')->children()
                     ->itemNode('dataScope', 'string', 'data')
-                    ->itemNode('namespace', 'string', $this->generateNamespaceName())
+                    ->itemNode('namespace', 'string', $this->generateNamespaceName($moduleNameEntity, $entityName))
                 ->endNode()
                 ->itemNode('template', 'string', 'templates/form/collapsible')
                 ->itemNode('buttons', 'array')->children()
@@ -107,15 +118,15 @@ class Form extends \Krifollk\CodeGenerator\Model\Generator\AbstractGenerator
                     ->endNode()
                 ->endNode()
             ->endNode()
-            ->elementNode('dataSource', ['name' => $this->generateProviderName()])->children()
+            ->elementNode('dataSource', ['name' => $this->generateProviderName($entityName)])->children()
                 ->argumentNode('dataProvider', 'configurableObject')->children()
                     ->argumentNode('class', 'string', $additionalArguments['dataProvider'])
-                    ->argumentNode('name', 'string', $this->generateProviderName())
-                    ->argumentNode('primaryFieldName', 'string', $this->getPrimaryFieldName())
-                    ->argumentNode('requestFieldName', 'string', $this->getPrimaryFieldName())
+                    ->argumentNode('name', 'string', $this->generateProviderName($entityName))
+                    ->argumentNode('primaryFieldName', 'string', $primaryFieldName)
+                    ->argumentNode('requestFieldName', 'string', $primaryFieldName)
                     ->argumentNode('data', 'array')->children()
                         ->itemNode('config', 'array')->children()
-                            ->itemNode('submit_url', 'url', '', ['path' => $this->generateSubmitUrl()])
+                            ->itemNode('submit_url', 'url', '', ['path' => $this->generateSubmitUrl($moduleNameEntity, $entityName)])
                         ->endNode()
                     ->endNode()
                 ->endNode()
@@ -132,16 +143,16 @@ class Form extends \Krifollk\CodeGenerator\Model\Generator\AbstractGenerator
                     ->endNode()
                 ->endNode();
 
-        foreach ($this->getColumns() as $column) {
-            $form->elementNode('field', ['name' => $column->getName()])->children()
+        foreach ($tableDescriberResult->columns() as $column) {
+            $form->elementNode('field', ['name' => $column->name()])->children()
                     ->argumentNode('data', 'array')->children()
                         ->itemNode('config', 'array')->children()
                             ->itemNode('visible', 'boolean', 'true')
                             ->itemNode('dataType', 'string', 'text')
-                            ->itemNode('label', 'string', ucfirst(str_replace('_', ' ', $column->getName())), ['translate' => 'true'])
+                            ->itemNode('label', 'string', NameUtil::generateLabelFromColumn($column), ['translate' => 'true'])
                             ->itemNode('formElement', 'string', 'input')
-                            ->itemNode('source', 'string', lcfirst($this->entityName))
-                            ->itemNode('dataScope', 'string', $column->getName())
+                            ->itemNode('source', 'string', lcfirst($entityName))
+                            ->itemNode('dataScope', 'string', $column->name())
                         ->endNode()
                     ->endNode()
                 ->endNode();
@@ -151,76 +162,43 @@ class Form extends \Krifollk\CodeGenerator\Model\Generator\AbstractGenerator
 
         return new GeneratorResult(
             $form->toXml(),
-            $this->getDestinationFile(),
-            ''
+            $destinationFile,
+            'ui_component_form',
+            $exposedMessages
         );
     }
 
-    protected function generateJsConfigProviderName()
+    private function generateJsConfigProviderName(ModuleNameEntity $moduleNameEntity, string $entityName): string
     {
         return sprintf(
             '%s_%s_form.%s',
-            strtolower(str_replace('/', '_', $this->moduleName)),
-            strtolower($this->entityName),
-            $this->generateProviderName()
+            strtolower($moduleNameEntity->value()),
+            strtolower($entityName),
+            $this->generateProviderName($entityName)
         );
     }
 
-    private function generateProviderName()
+    private function generateProviderName(string $entityName): string
     {
-        return sprintf('%s_form_data_source', strtolower($this->entityName));
+        return sprintf('%s_form_data_source', strtolower($entityName));
     }
 
-    /**
-     * @return string
-     */
-    protected function generateJsConfigDepsName()
+    private function generateJsConfigDepsName(ModuleNameEntity $moduleNameEntity, string $entityName): string
     {
-        return $this->generateJsConfigProviderName();
+        return $this->generateJsConfigProviderName($moduleNameEntity, $entityName);
     }
 
-    private function generateNamespaceName()
+    private function generateNamespaceName(ModuleNameEntity $moduleNameEntity, string $entityName)
     {
         return sprintf(
             '%s_%s_form',
-            strtolower(str_replace('/', '_', $this->moduleName)),
-            strtolower($this->entityName)
+            strtolower($moduleNameEntity->value()),
+            strtolower($entityName)
         );
     }
 
-    protected function getPrimaryFieldName()
+    private function generateSubmitUrl(ModuleNameEntity $moduleNameEntity, string $entityName)
     {
-        foreach ($this->getColumns() as $column) {
-            if ($column->isIsPrimary()) {
-                return $column->getName();
-            }
-        }
-
-        return '';
-    }
-
-    /**
-     * @return \Krifollk\CodeGenerator\Model\TableInfo\Column[]
-     */
-    protected function getColumns()
-    {
-        if ($this->columns === null) {
-            $this->columns = $this->tableInfoFactory->create(['tableName' => $this->tableName])->getColumns();
-        }
-
-        return $this->columns;
-    }
-
-    private function generateSubmitUrl()
-    {
-        return sprintf('%s/%s/save', strtolower(str_replace('/', '_', $this->moduleName)), lcfirst($this->entityName));
-    }
-
-    /**
-     * @return string
-     */
-    protected function getDestinationFile()
-    {
-        return sprintf(self::FILE, $this->moduleName, $this->generateNamespaceName());
+        return sprintf('%s/%s/save', NameUtil::generateModuleFrontName($moduleNameEntity), lcfirst($entityName));
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
  * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
@@ -13,68 +15,59 @@ use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
 use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
 use Krifollk\CodeGenerator\Model\Generator\NameUtil;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
+use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Krifollk\CodeGenerator\Model\NodeBuilder;
-use Krifollk\CodeGenerator\Model\TableInfo;
-use Krifollk\CodeGenerator\Model\TableInfoFactory;
+use Krifollk\CodeGenerator\Model\TableDescriber\Result;
 use Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider;
 
 /**
- * Class Listing
+ * Class ListingGenerator
  *
  * @package Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent
  */
-class Listing extends AbstractGenerator
+class ListingGenerator extends AbstractGenerator
 {
-    const FILE = BP . '/app/code/%s/view/adminhtml/ui_component/%s_%s_listing.xml';
-
-    /** @var string */
-    private $entityName;
-
-    /** @var string */
-    private $tableName;
-
-    /** @var TableInfoFactory */
-    private $tableInfoFactory;
-
-    /** @var TableInfo\Column[] */
-    private $columns;
+    const FILE               = '%s/view/adminhtml/ui_component/%s_%s_listing.xml';
+    const REQUEST_FIELD_NAME = 'id';
 
     /**
-     * @param string           $moduleName
-     * @param string           $entityName
-     * @param string           $tableName
-     * @param TableInfoFactory $tableInfoFactory
+     * @inheritdoc
      */
-    public function __construct($moduleName, $entityName, $tableName, TableInfoFactory $tableInfoFactory)
+    protected function requiredArguments(): array
     {
-        parent::__construct($moduleName);
-        $this->entityName       = $entityName;
-        $this->tableName        = $tableName;
-        $this->tableInfoFactory = $tableInfoFactory;
+        return ['entityName', 'tableDescriberResult', 'actionsColumnClass'];
     }
 
     /**
-     * Generate entity
-     *
-     * @param ModuleNameEntity|\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity
-     * @param array                                                           $additionalArguments
-     *
-     * @return GeneratorResultInterface
+     * @inheritdoc
      */
-    public function generate(\Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity, array $additionalArguments = [])
-    {
+    protected function internalGenerate(
+        ModuleNameEntity $moduleNameEntity,
+        array $additionalArguments = []
+    ): GeneratorResultInterface {
         $listing = new NodeBuilder('listing', [
             'xmlns:xsi'                     => 'http://www.w3.org/2001/XMLSchema-instance',
             'xsi:noNamespaceSchemaLocation' => 'urn:magento:module:Magento_Ui:etc/ui_configuration.xsd'
         ]);
+        $entityName = $additionalArguments['entityName'];
+        /** @var Result $tableDescriberResult */
+        $tableDescriberResult = $additionalArguments['tableDescriberResult'];
+        $exposedMessages = [];
+
+        try {
+            $primaryFieldName = $tableDescriberResult->primaryColumn()->name();
+        } catch (\RuntimeException $e) {
+            $exposedMessages[] = '';//todo
+            $primaryFieldName = '<--COLUMN_NAME->';
+        }
 
         $listing
             ->argumentNode('data', 'array')->children()
                 ->itemNode('js_config', 'array')->children()
-                    ->itemNode('provider', 'string', $this->generateProvider())
-                    ->itemNode('deps', 'string', $this->generateDeps())
+                    ->itemNode('provider', 'string', $this->generateProvider($moduleNameEntity, $entityName))
+                    ->itemNode('deps', 'string', $this->generateDeps($moduleNameEntity, $entityName))
                 ->endNode()
-                ->itemNode('spinner', 'string', $this->generateSpinnerColumnsName())
+                ->itemNode('spinner', 'string', $this->generateSpinnerColumnsName($moduleNameEntity, $entityName))
                 ->itemNode('buttons', 'array')->children()
                     ->itemNode('add', 'array')->children()
                         ->itemNode('name', 'string', 'add')
@@ -84,18 +77,18 @@ class Listing extends AbstractGenerator
                     ->endNode()
                 ->endNode()
             ->endNode()
-            ->elementNode('dataSource', ['name' => $this->generateDataSourceName()])->children()
+            ->elementNode('dataSource', ['name' => $this->generateDataSourceName($moduleNameEntity, $entityName)])->children()
                 ->argumentNode('dataProvider', 'configurableObject')->children()
                     ->argumentNode('class', 'string', DataProvider::class)
-                    ->argumentNode('name', 'string', $this->generateDataSourceName())
-                    ->argumentNode('primaryFieldName', 'string', $this->getPrimaryFieldName())
-                    ->argumentNode('requestFieldName', 'string', 'id')
+                    ->argumentNode('name', 'string', $this->generateDataSourceName($moduleNameEntity, $entityName))
+                    ->argumentNode('primaryFieldName', 'string', $primaryFieldName)
+                    ->argumentNode('requestFieldName', 'string', self::REQUEST_FIELD_NAME)
                     ->argumentNode('data', 'array')->children()
                         ->itemNode('config', 'array')->children()
                             ->itemNode('component', 'string', 'Magento_Ui/js/grid/provider')
                             ->itemNode('update_url', 'url', '', ['path' => 'mui/index/render'])
                             ->itemNode('storageConfig', 'array')->children()
-                                ->itemNode('indexField', 'string', $this->getPrimaryFieldName())
+                                ->itemNode('indexField', 'string', $primaryFieldName)
                             ->endNode()
                         ->endNode()
                     ->endNode()
@@ -130,7 +123,7 @@ class Listing extends AbstractGenerator
                             ->itemNode('config', 'array')->children()
                                 ->itemNode('type', 'string', 'delete')
                                 ->itemNode('label', 'string', 'Delete', ['translate' => 'true'])
-                                ->itemNode('url', 'url', '', ['path' => '//massDelete'])//todo
+                                ->itemNode('url', 'url', '', ['path' => $this->generateUrl($moduleNameEntity, $entityName, 'massDelete')])
                                 ->itemNode('confirm', 'array')->children()
                                     ->itemNode('title', 'string', 'Delete items', ['translate' => 'true'])
                                     ->itemNode('message', 'string', 'Are you sure you wan\'t to delete selected items?', ['translate' => 'true'])
@@ -144,7 +137,7 @@ class Listing extends AbstractGenerator
                                 ->itemNode('type', 'string', 'edit')
                                 ->itemNode('label', 'string', 'Edit', ['translate' => 'true'])
                                 ->itemNode('callback', 'array')->children()
-                                    ->itemNode('provider', 'string', $this->getFieldActionProvider())
+                                    ->itemNode('provider', 'string', $this->getFieldActionProvider($moduleNameEntity, $entityName))
                                     ->itemNode('target', 'string', 'editSelected')
                                 ->endNode()
                             ->endNode()
@@ -153,21 +146,21 @@ class Listing extends AbstractGenerator
                 ->endNode()
                 ->elementNode('paging', ['name' => 'listing_paging'])
             ->endNode()
-            ->elementNode('columns', ['name' => $this->generateSpinnerColumnsName()])->children()
+            ->elementNode('columns', ['name' => $this->generateSpinnerColumnsName($moduleNameEntity, $entityName)])->children()
                 ->argumentNode('data', 'array')->children()
                     ->itemNode('config', 'array')->children()
                         ->itemNode('editorConfig', 'array')->children()
-                            ->itemNode('selectProvider', 'string', $this->getSelectProvider())
+                            ->itemNode('selectProvider', 'string', $this->getSelectProvider($moduleNameEntity, $entityName))
                             ->itemNode('enabled', 'boolean', 'true')
-                            ->itemNode('indexField', 'string', $this->getPrimaryFieldName())
+                            ->itemNode('indexField', 'string', $primaryFieldName)
                             ->itemNode('clientConfig', 'array')->children()
-                                ->itemNode('saveUrl', 'url', '', ['path' => $this->getInlineEditUrl()])
+                                ->itemNode('saveUrl', 'url', '', ['path' => $this->generateUrl($moduleNameEntity, $entityName, 'inlineEdit')])
                                 ->itemNode('validateBeforeSave', 'boolean', 'false')
                             ->endNode()
                         ->endNode()
                         ->itemNode('childDefaults', 'array')->children()
                             ->itemNode('fieldAction', 'array')->children()
-                                ->itemNode('provider', 'string', $this->getFieldActionProvider())
+                                ->itemNode('provider', 'string', $this->getFieldActionProvider($moduleNameEntity, $entityName))
                                 ->itemNode('target', 'string', 'startEdit')
                                 ->itemNode('params', 'array')->children()
                                     ->itemNode('0', 'string', '${ $.$data.rowIndex }')
@@ -180,18 +173,18 @@ class Listing extends AbstractGenerator
                 ->elementNode('selectionsColumn', ['name' => 'ids'])->children()
                     ->argumentNode('data', 'array')->children()
                         ->itemNode('config', 'array')->children()
-                            ->itemNode('indexField', 'string', $this->getPrimaryFieldName())
+                            ->itemNode('indexField', 'string', $primaryFieldName)
                         ->endNode()
                     ->endNode()
                 ->endNode();
 
-        foreach ($this->getColumns() as $column) {
+        foreach ($tableDescriberResult->columns() as $column) {
             $listing
-                ->elementNode('column', ['name' => $column->getName()])->children()
+                ->elementNode('column', ['name' => $column->name()])->children()
                     ->argumentNode('data', 'array')->children()
                         ->itemNode('config', 'array')->children()
                             ->itemNode('filter', 'string', 'text')
-                            ->itemNode('label', 'string', str_replace('_', ' ', $column->getName()), ['translate' => 'true'])
+                            ->itemNode('label', 'string', NameUtil::generateLabelFromColumn($column), ['translate' => 'true'])
                         ->endNode()
                     ->endNode()
                 ->endNode();
@@ -201,151 +194,71 @@ class Listing extends AbstractGenerator
             ->elementNode('actionsColumn', ['name' => 'actions', 'class' => $additionalArguments['actionsColumnClass']])->children()
                 ->argumentNode('data', 'array')->children()
                     ->itemNode('config', 'array')->children()
-                        ->itemNode('indexField', 'string', $this->getPrimaryFieldName())
+                        ->itemNode('indexField', 'string', $primaryFieldName)
                     ->endNode()
                 ->endNode()
             ->endNode();
 
         return new GeneratorResult(
             $listing->toXml(),
-            $this->getDestinationFile(),
-            $this->entityName
+            sprintf(self::FILE, $moduleNameEntity->asPartOfPath(), mb_strtolower($moduleNameEntity->value()), mb_strtolower($entityName)),
+            $entityName,
+            $exposedMessages
         );
     }
 
-    /**
-     * @return string
-     * @throws \InvalidArgumentException
-     */
-    private function generateProvider()
+    private function generateProvider(ModuleNameEntity $moduleNameEntity, string $entityName): string
     {
         return sprintf('%s.%s',
-            NameUtil::generateListingName(str_replace('/', '_', $this->moduleName), $this->entityName),
-            NameUtil::generateDataSourceName(str_replace('/', '_', $this->moduleName), $this->entityName)
+            NameUtil::generateListingName($moduleNameEntity, $entityName),
+            NameUtil::generateDataSourceName($moduleNameEntity, $entityName)
         );
     }
 
-    /**
-     * @return string
-     * @throws \InvalidArgumentException
-     */
-    private function generateDeps()
+    private function generateDeps(ModuleNameEntity $moduleNameEntity, string $entityName): string
     {
-        return $this->generateProvider();
+        return $this->generateProvider($moduleNameEntity, $entityName);
     }
 
-    /**
-     * @return string
-     */
-    private function generateSpinnerColumnsName()
+    private function generateSpinnerColumnsName(ModuleNameEntity $moduleNameEntity, string $entityName): string
     {
-        return sprintf('%s_%s_columns', $this->getNormalizedModuleName(), $this->getNormalizedEntityName());
+        return sprintf('%s_%s_columns', $moduleNameEntity->value(), lcfirst($entityName));
     }
 
-    /**
-     * @return string
-     */
-    private function getNormalizedModuleName()
+    private function generateDataSourceName(ModuleNameEntity $moduleNameEntity, string $entityName): string
     {
-        return mb_strtolower(str_replace('/', '_', $this->moduleName));
+        return NameUtil::generateDataSourceName($moduleNameEntity, $entityName);
     }
 
-    /**
-     * @return string
-     */
-    private function getNormalizedEntityName()
-    {
-        return lcfirst($this->entityName);
-    }
-
-    /**
-     * @return string
-     * @throws \InvalidArgumentException
-     */
-    private function generateDataSourceName(): string
-    {
-        return NameUtil::generateDataSourceName(str_replace('/', '_', $this->moduleName), $this->entityName);
-    }
-
-    /**
-     * @return string
-     */
-    private function getPrimaryFieldName()
-    {
-        //TODO Refactor
-        foreach ($this->getColumns() as $tableColumn) {
-            if ($tableColumn->isIsPrimary()) {
-                return $tableColumn->getName();
-            }
-        }
-
-        return 'undefined';
-    }
-
-    /**
-     * @return TableInfo\Column[]
-     */
-    private function getColumns()
-    {
-        if ($this->columns === null) {
-            $this->columns = $this->tableInfoFactory->create(['tableName' => $this->tableName])->getColumns();
-        }
-
-        return $this->columns;
-    }
-
-    /**
-     * @return string
-     */
-    private function getFieldActionProvider()
+    private function getFieldActionProvider(ModuleNameEntity $moduleNameEntity, string $entityName): string
     {
         return sprintf(
             '%s.%s.%s_%s_columns_editor',
-            $this->getListingName(),
-            $this->getListingName(),
-            $this->getNormalizedModuleName(),
-            $this->getNormalizedEntityName()
+            $this->getListingName($moduleNameEntity, $entityName),
+            $this->getListingName($moduleNameEntity, $entityName),
+            mb_strtolower($moduleNameEntity->value()),
+            lcfirst($entityName)
         );
     }
 
-    /**
-     * @return string
-     */
-    private function getListingName()
+    private function getListingName(ModuleNameEntity $moduleNameEntity, string $entityName): string
     {
-        return sprintf('%s_%s_listing', $this->getNormalizedModuleName(), $this->getNormalizedEntityName());
+        return sprintf('%s_%s_listing', mb_strtolower($moduleNameEntity->value()), lcfirst($entityName));
     }
 
-    /**
-     * @return string
-     */
-    private function getSelectProvider()
+    private function getSelectProvider(ModuleNameEntity $moduleNameEntity, string $entityName): string
     {
         return sprintf(
             '%s.%s.%s_%s_columns.ids',
-            $this->getListingName(),
-            $this->getListingName(),
-            $this->getNormalizedModuleName(),
-            $this->getNormalizedEntityName()
+            $this->getListingName($moduleNameEntity, $entityName),
+            $this->getListingName($moduleNameEntity, $entityName),
+            mb_strtolower($moduleNameEntity->value()),
+            lcfirst($entityName)
         );
     }
 
-    /**
-     * @return string
-     */
-    private function getInlineEditUrl()
+    private function generateUrl(ModuleNameEntity $moduleNameEntity, string $entityName, string $action): string
     {
-        return sprintf('%s/%s/inlineEdit', mb_strtolower($this->moduleName), $this->getNormalizedEntityName());
-    }
-
-    /**
-     * @return string
-     */
-    private function getDestinationFile()
-    {
-        $normalizedModuleName = mb_strtolower(str_replace('/', '_', $this->moduleName));
-        $entityName = mb_strtolower($this->entityName);
-
-        return sprintf(self::FILE, $this->moduleName, $normalizedModuleName, $entityName);
+        return sprintf('%s/%s/%s', NameUtil::generateModuleFrontName($moduleNameEntity), lcfirst($entityName), $action);
     }
 }

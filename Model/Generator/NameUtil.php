@@ -41,4 +41,19 @@ final class NameUtil
     {
         return sprintf('\%s\Model\ResourceModel\%s\Collection', $moduleNameEntity->asPartOfNamespace(), $entityName);
     }
+
+    public static function generateModuleFrontName(ModuleNameEntity $moduleNameEntity): string
+    {
+        return implode('_', array_map('lcfirst', explode('_', $moduleNameEntity->value(), 2)));
+    }
+
+    public static function generateLabelFromColumn(\Krifollk\CodeGenerator\Model\TableDescriber\Result\Column $column): string
+    {
+        return implode(' ', array_map('ucfirst', explode('_', $column->name())));
+    }
+
+    public static function generateDataPersistorKey(ModuleNameEntity $moduleNameEntity, $entityName): string
+    {
+        return mb_strtolower($moduleNameEntity->value()) . '_' . mb_strtolower($entityName);
+    }
 }

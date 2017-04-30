@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
  * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
@@ -11,27 +13,32 @@ namespace Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
 use Krifollk\CodeGenerator\Model\ClassBuilder;
-use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
-use Magento\Framework\Code\Generator\ClassGenerator;
-use Zend\Code\Generator\FileGenerator;
+use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 
 /**
- * Class Index
+ * Class IndexActionGenerator
  *
  * @package Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml
  */
-class Index extends AbstractAction
+class IndexActionGenerator extends AbstractAction
 {
-    protected function internalGenerate(array $arguments)
-    {
+    /**
+     * @inheritdoc
+     */
+    protected function internalGenerate(
+        ModuleNameEntity $moduleNameEntity,
+        array $additionalArguments = []
+    ): GeneratorResultInterface {
+        $entityName = $additionalArguments['entityName'];
+
         /** @var ClassBuilder $classGenerator */
-        $classGenerator = new ClassBuilder($this->generateEntityName($arguments['moduleName'], $arguments['entityName'], 'Index'));
+        $classGenerator = new ClassBuilder($this->generateEntityName($moduleNameEntity, $entityName, 'Index'));
 
         /** @var \Magento\Framework\Code\Generator\ClassGenerator $generator */
         $generator = $classGenerator
             ->extendedFrom('\Magento\Backend\App\Action')
-            ->usesNamespace($this->generateNamespace($arguments['moduleName'], $arguments['entityName']))
+            ->usesNamespace($this->generateNamespace($moduleNameEntity, $entityName))
             ->startPropertyBuilding('resultPageFactory')
                 ->markAsPrivate()
             ->finishBuilding()
@@ -51,21 +58,19 @@ class Index extends AbstractAction
 
         return new GeneratorResult(
             $this->wrapToFile($generator)->generate(),
-            $this->generateFilePath($arguments['moduleName'], $arguments['entityName'], 'Index'),
-            $this->generateEntityName($arguments['moduleName'], $arguments['entityName'], 'Index')
+            $this->generateFilePath($moduleNameEntity, $entityName, 'Index'),
+            $this->generateEntityName($moduleNameEntity, $entityName, 'Index')
         );
     }
 
-
-
-    private function getConstructorBody()
+    private function getConstructorBody(): string
     {
         return '$this->resultPageFactory = $resultPageFactory;'
             . "\n"
             . 'parent::__construct($context);';
     }
 
-    private function getExecuteBody()
+    private function getExecuteBody(): string
     {
         return 'return $this->resultPageFactory->create();';
     }
