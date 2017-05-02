@@ -11,8 +11,10 @@ declare(strict_types=1);
 
 namespace Krifollk\CodeGenerator\Model\Command;
 
+use Krifollk\CodeGenerator\Api\ModulesDirProviderInterface;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Config\Adminhtml\RoutesGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Config\DiGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml\DeleteActionGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml\EditActionGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml\IndexActionGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml\NewActionGenerator;
@@ -27,6 +29,7 @@ use Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent\Listing\Column\Entit
 use Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent\ListingGenerator;
 use Krifollk\CodeGenerator\Model\Generator\NameUtil;
 use Krifollk\CodeGenerator\Model\Generator\Triad\CollectionGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Triad\DiGenerator as CrudDiGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Triad\EntityGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Triad\EntityInterfaceGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryGenerator;
@@ -85,6 +88,9 @@ class Crud extends Triad
     /** @var SaveActionGenerator */
     private $saveActionGenerator;
 
+    /** @var DeleteActionGenerator */
+    private $deleteActionGenerator;
+
     public function __construct(
         EntityGenerator $entityGenerator,
         EntityInterfaceGenerator $interfaceGenerator,
@@ -92,7 +98,9 @@ class Crud extends Triad
         CollectionGenerator $collectionGenerator,
         RepositoryInterfaceGenerator $repositoryInterfaceGenerator,
         RepositoryGenerator $repositoryGenerator,
+        CrudDiGenerator $crudDiGenerator,
         \Magento\Framework\Filesystem\Driver\File $file,
+        ModulesDirProviderInterface $modulesDirProvider,
         TableDescriber $tableDescriber,
         EntityActionsGenerator $entityActionsGenerator,
         DataProviderGenerator $dataProviderGenerator,
@@ -107,7 +115,8 @@ class Crud extends Triad
         DiGenerator $diGenerator,
         EditActionGenerator $editActionGenerator,
         NewActionGenerator $newActionGenerator,
-        SaveActionGenerator $saveActionGenerator
+        SaveActionGenerator $saveActionGenerator,
+        DeleteActionGenerator $deleteActionGenerator
     ) {
         parent::__construct(
             $entityGenerator,
@@ -116,8 +125,10 @@ class Crud extends Triad
             $collectionGenerator,
             $repositoryInterfaceGenerator,
             $repositoryGenerator,
+            $crudDiGenerator,
             $file,
-            $tableDescriber
+            $tableDescriber,
+            $modulesDirProvider
         );
         $this->entityActionsGenerator = $entityActionsGenerator;
         $this->dataProviderGenerator = $dataProviderGenerator;
@@ -133,6 +144,7 @@ class Crud extends Triad
         $this->editActionGenerator = $editActionGenerator;
         $this->newActionGenerator = $newActionGenerator;
         $this->saveActionGenerator = $saveActionGenerator;
+        $this->deleteActionGenerator = $deleteActionGenerator;
     }
 
     protected function prepareEntities(
@@ -196,13 +208,18 @@ class Crud extends Triad
             'entityName'           => $entityName,
             'resourceModelName'    => $resultContainer->get('resource')->getEntityName(),
             'gridCollectionClass'  => $resultContainer->get('crud_grid_collection')->getEntityName(),
-            'tableDescriberResult' => $tableDescriberResult
+            'tableDescriberResult' => $tableDescriberResult,
+            'entityClass'          => $resultContainer->get('entity')->getEntityName(),
+            'entityInterface'      => $resultContainer->get('entity_interface')->getEntityName(),
+            'repository'           => $resultContainer->get('repository')->getEntityName(),
+            'repositoryInterface'  => $resultContainer->get('repository_interface')->getEntityName()
         ]));
 
         $resultContainer->insert('crud_controller_edit', $this->editActionGenerator->generate($moduleName, [
             'entityName'       => $entityName,
             'entityRepository' => $resultContainer->get('repository_interface')->getEntityName()
         ]));
+
 
         $resultContainer->insert('crud_controller_new', $this->newActionGenerator->generate($moduleName, [
             'entityName' => $entityName
@@ -214,6 +231,12 @@ class Crud extends Triad
             'entity'                 => $resultContainer->get('entity_interface')->getEntityName(),
             'dataPersistorEntityKey' => $dataPersistorEntityKey
         ]));
+
+        $resultContainer->insert('crud_controller_delete', $this->deleteActionGenerator->generate($moduleName, [
+            'entityName'       => $entityName,
+            'entityRepositoryInterface' => $resultContainer->get('repository_interface')->getEntityName()
+        ]));
+
 
         return $resultContainer;
     }

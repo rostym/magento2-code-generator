@@ -55,7 +55,7 @@ class TableDescriber
             $dbType = $this->extractDbType($data);
             $type = $this->getPhpType($dbType);
 
-            $columnObject = new Result\Column($columnName, $type, $dbType, $this->isPrimary($data));
+            $columnObject = new Result\Column($columnName, $type, $dbType, $this->isPrimary($data), !$data['NULLABLE']);
             $columnObjects[] = $columnObject;
 
             if ($columnObject->isPrimary()) {

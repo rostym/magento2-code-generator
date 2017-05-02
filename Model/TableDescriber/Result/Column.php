@@ -30,6 +30,9 @@ class Column
     /** @var bool */
     private $isPrimary;
 
+    /** @var bool */
+    private $isRequired;
+
     /**
      * Column constructor.
      *
@@ -37,13 +40,15 @@ class Column
      * @param string $type
      * @param string $dbType
      * @param bool   $isPrimary
+     * @param bool   $isRequired
      */
-    public function __construct(string $name, string $type, string $dbType, bool $isPrimary)
+    public function __construct(string $name, string $type, string $dbType, bool $isPrimary, bool $isRequired)
     {
         $this->name = $name;
         $this->type = $type;
         $this->dbType = $dbType;
         $this->isPrimary = $isPrimary;
+        $this->isRequired = $isRequired;
     }
 
     public function isPrimary(): bool
@@ -64,5 +69,10 @@ class Column
     public function dbType(): string
     {
         return $this->dbType;
+    }
+
+    public function isRequired(): bool
+    {
+        return $this->isRequired;
     }
 }

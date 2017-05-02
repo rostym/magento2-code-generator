@@ -19,7 +19,7 @@ final class NameUtil
 
     public static function generateDataSourceName(ModuleNameEntity $moduleNameEntity, $entityName): string
     {
-        return sprintf('%s_data_source', self::generateListingName($moduleNameEntity, $entityName));
+        return sprintf('%s_data_source', self::generateListingName($moduleNameEntity, mb_strtolower($entityName)));
     }
 
     public static function generateListingName(ModuleNameEntity $moduleNameEntity, string $entityName): string

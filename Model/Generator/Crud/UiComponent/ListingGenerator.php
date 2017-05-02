@@ -185,6 +185,12 @@ class ListingGenerator extends AbstractGenerator
                         ->itemNode('config', 'array')->children()
                             ->itemNode('filter', 'string', 'text')
                             ->itemNode('label', 'string', NameUtil::generateLabelFromColumn($column), ['translate' => 'true'])
+                            ->itemNode('editor', 'array')->children()
+                                ->itemNode('editorType', 'string', 'text')
+                                ->itemNode('validation', 'array')->children()
+                                    ->itemNode('required-entry', 'boolean', $column->isRequired() ? 'true' : 'false')
+                                ->endNode()
+                            ->endNode()
                         ->endNode()
                     ->endNode()
                 ->endNode();
@@ -222,7 +228,7 @@ class ListingGenerator extends AbstractGenerator
 
     private function generateSpinnerColumnsName(ModuleNameEntity $moduleNameEntity, string $entityName): string
     {
-        return sprintf('%s_%s_columns', $moduleNameEntity->value(), lcfirst($entityName));
+        return sprintf('%s_%s_columns', mb_strtolower($moduleNameEntity->value()), mb_strtolower($entityName));
     }
 
     private function generateDataSourceName(ModuleNameEntity $moduleNameEntity, string $entityName): string
@@ -237,13 +243,13 @@ class ListingGenerator extends AbstractGenerator
             $this->getListingName($moduleNameEntity, $entityName),
             $this->getListingName($moduleNameEntity, $entityName),
             mb_strtolower($moduleNameEntity->value()),
-            lcfirst($entityName)
+            mb_strtolower($entityName)
         );
     }
 
     private function getListingName(ModuleNameEntity $moduleNameEntity, string $entityName): string
     {
-        return sprintf('%s_%s_listing', mb_strtolower($moduleNameEntity->value()), lcfirst($entityName));
+        return sprintf('%s_%s_listing', mb_strtolower($moduleNameEntity->value()), mb_strtolower($entityName));
     }
 
     private function getSelectProvider(ModuleNameEntity $moduleNameEntity, string $entityName): string
@@ -253,7 +259,7 @@ class ListingGenerator extends AbstractGenerator
             $this->getListingName($moduleNameEntity, $entityName),
             $this->getListingName($moduleNameEntity, $entityName),
             mb_strtolower($moduleNameEntity->value()),
-            lcfirst($entityName)
+            mb_strtolower($entityName)
         );
     }
 

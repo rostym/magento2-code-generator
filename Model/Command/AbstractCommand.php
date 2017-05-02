@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Krifollk\CodeGenerator\Model\Command;
 
+use Krifollk\CodeGenerator\Api\ModulesDirProviderInterface;
 use Krifollk\CodeGenerator\Model\GeneratorResult\Container;
 use Magento\Framework\Filesystem\Driver\File;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
@@ -25,14 +26,19 @@ class AbstractCommand
     /** @var File */
     private $file;
 
+    /** @var ModulesDirProviderInterface */
+    private $modulesDirProvider;
+
     /**
      * AbstractCommand constructor.
      *
-     * @param File $file
+     * @param File                        $file
+     * @param ModulesDirProviderInterface $modulesDirProvider
      */
-    public function __construct(File $file)
+    public function __construct(File $file, ModulesDirProviderInterface $modulesDirProvider)
     {
         $this->file = $file;
+        $this->modulesDirProvider = $modulesDirProvider;
     }
 
     /**
@@ -66,6 +72,6 @@ class AbstractCommand
 
     private function getModulesDir(): string
     {
-        return BP . '/app/code/';
+        return $this->modulesDirProvider->getModulesDir();
     }
 }

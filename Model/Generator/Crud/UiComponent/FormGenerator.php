@@ -110,7 +110,6 @@ class FormGenerator extends \Krifollk\CodeGenerator\Model\Generator\AbstractGene
                         ->endNode()
                     ->endNode()
                     ->itemNode('reset', 'array')->children()
-//                        ->itemNode('name', 'string', 'reset')
                         ->itemNode('label', 'string', 'Reset', ['translate' => 'true'])
                         ->itemNode('class', 'string', 'reset')
                         ->itemNode('on_click', 'string', 'location.reload();')
@@ -123,7 +122,7 @@ class FormGenerator extends \Krifollk\CodeGenerator\Model\Generator\AbstractGene
                     ->argumentNode('class', 'string', $additionalArguments['dataProvider'])
                     ->argumentNode('name', 'string', $this->generateProviderName($entityName))
                     ->argumentNode('primaryFieldName', 'string', $primaryFieldName)
-                    ->argumentNode('requestFieldName', 'string', $primaryFieldName)
+                    ->argumentNode('requestFieldName', 'string', ListingGenerator::REQUEST_FIELD_NAME)
                     ->argumentNode('data', 'array')->children()
                         ->itemNode('config', 'array')->children()
                             ->itemNode('submit_url', 'url', '', ['path' => $this->generateSubmitUrl($moduleNameEntity, $entityName)])
@@ -139,11 +138,18 @@ class FormGenerator extends \Krifollk\CodeGenerator\Model\Generator\AbstractGene
             ->elementNode('fieldset', ['name' => 'general'])->children()
                 ->argumentNode('data', 'array')->children()
                     ->itemNode('config', 'array')->children()
-                        ->itemNode('label', 'string')
+                        ->itemNode('label', 'string', 'General')
+                        ->itemNode('collapsible', 'boolean', 'true')
+                        ->itemNode('opened', 'boolean', 'true')
+                        ->itemNode('sortOrder', 'number', 10)
                     ->endNode()
                 ->endNode();
 
         foreach ($tableDescriberResult->columns() as $column) {
+            if ($column->isPrimary()) {
+                continue;
+            }
+
             $form->elementNode('field', ['name' => $column->name()])->children()
                     ->argumentNode('data', 'array')->children()
                         ->itemNode('config', 'array')->children()
@@ -153,6 +159,9 @@ class FormGenerator extends \Krifollk\CodeGenerator\Model\Generator\AbstractGene
                             ->itemNode('formElement', 'string', 'input')
                             ->itemNode('source', 'string', lcfirst($entityName))
                             ->itemNode('dataScope', 'string', $column->name())
+                            ->itemNode('validation', 'array')->children()
+                                ->itemNode('required-entry', 'boolean', $column->isRequired() ? 'true' : 'false')
+                            ->endNode()
                         ->endNode()
                     ->endNode()
                 ->endNode();

@@ -11,8 +11,10 @@ declare(strict_types=1);
 
 namespace Krifollk\CodeGenerator\Model\Command;
 
+use Krifollk\CodeGenerator\Api\ModulesDirProviderInterface;
 use Krifollk\CodeGenerator\Model\Generator\NameUtil;
 use Krifollk\CodeGenerator\Model\Generator\Triad\CollectionGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Triad\DiGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Triad\EntityInterfaceGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Triad\EntityGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryInterfaceGenerator;
@@ -50,6 +52,9 @@ class Triad extends AbstractCommand
     /** @var TableDescriber */
     protected $tableDescriber;
 
+    /** @var DiGenerator */
+    private $diGenerator;
+
     public function __construct(
         EntityGenerator $entityGenerator,
         EntityInterfaceGenerator $interfaceGenerator,
@@ -57,8 +62,10 @@ class Triad extends AbstractCommand
         CollectionGenerator $collectionGenerator,
         RepositoryInterfaceGenerator $repositoryInterfaceGenerator,
         RepositoryGenerator $repositoryGenerator,
+        DiGenerator $diGenerator,
         \Magento\Framework\Filesystem\Driver\File $file,
-        TableDescriber $tableDescriber
+        TableDescriber $tableDescriber,
+        ModulesDirProviderInterface $modulesDirProvider
     ) {
         $this->entityGenerator = $entityGenerator;
         $this->interfaceGenerator = $interfaceGenerator;
@@ -66,8 +73,9 @@ class Triad extends AbstractCommand
         $this->collectionGenerator = $collectionGenerator;
         $this->repositoryInterfaceGenerator = $repositoryInterfaceGenerator;
         $this->repositoryGenerator = $repositoryGenerator;
-        parent::__construct($file);
         $this->tableDescriber = $tableDescriber;
+        $this->diGenerator = $diGenerator;
+        parent::__construct($file, $modulesDirProvider);
     }
 
     /**
@@ -149,6 +157,13 @@ class Triad extends AbstractCommand
             'resourceEntityName'      => $resultContainer->get('resource')->getEntityName(),
             'entityCollectionName'    => $resultContainer->get('collection')->getEntityName(),
             'repositoryInterfaceName' => $resultContainer->get('repository_interface')->getEntityName()
+        ]));
+
+        $resultContainer->insert('di', $this->diGenerator->generate($moduleName, [
+            'entityClass'         => $resultContainer->get('entity')->getEntityName(),
+            'entityInterface'     => $resultContainer->get('entity_interface')->getEntityName(),
+            'repository'          => $resultContainer->get('repository')->getEntityName(),
+            'repositoryInterface' => $resultContainer->get('repository_interface')->getEntityName()
         ]));
 
         return $resultContainer;

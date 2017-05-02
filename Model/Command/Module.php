@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Krifollk\CodeGenerator\Model\Command;
 
+use Krifollk\CodeGenerator\Api\ModulesDirProviderInterface;
 use Krifollk\CodeGenerator\Model\Generator\Module\ModuleXml;
 use Krifollk\CodeGenerator\Model\Generator\Module\Registration;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
@@ -32,18 +33,20 @@ class Module extends AbstractCommand
     /**
      * Module constructor.
      *
-     * @param Registration $registration
-     * @param ModuleXml    $moduleXml
-     * @param File         $file
+     * @param Registration                $registration
+     * @param ModuleXml                   $moduleXml
+     * @param File                        $file
+     * @param ModulesDirProviderInterface $modulesDirProvider
      */
     public function __construct(
         Registration $registration,
         ModuleXml $moduleXml,
-        File $file
+        File $file,
+        ModulesDirProviderInterface $modulesDirProvider
     ) {
         $this->registration = $registration;
         $this->moduleXml = $moduleXml;
-        parent::__construct($file);
+        parent::__construct($file, $modulesDirProvider);
     }
 
     /**

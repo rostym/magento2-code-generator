@@ -99,6 +99,17 @@ parent::__construct($context);
         $requestFieldName = ListingGenerator::REQUEST_FIELD_NAME;
         return "
 \$id = \$this->getRequest()->getParam('$requestFieldName');
+if (\$id === null) {
+    return \$this->resultPageFactory->create();
+}
+try {
+    \$this->entityRepository->getById(\$id);
+} catch (\Magento\Framework\Exception\NoSuchEntityException \$e) {
+    \$this->messageManager->addErrorMessage(\$e->getMessage());
+    \$resultRedirect = \$this->resultRedirectFactory->create();
+    
+     return \$resultRedirect->setPath('*/*/');
+}
 
 return \$this->resultPageFactory->create();
 

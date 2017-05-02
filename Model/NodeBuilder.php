@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
  * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
@@ -30,14 +33,22 @@ class NodeBuilder
     /**
      * NodeBuilder constructor.
      *
-     * @param string $name
-     * @param array  $attributes
+     * @param string            $name
+     * @param array             $attributes
+     * @param \DOMDocument|null $document
      */
-    public function __construct($name, array $attributes = [])
+    public function __construct($name, array $attributes = [], \DOMDocument $document = null)
     {
-        $this->domDocument = new \DOMDocument('1.0', 'UTF-8');
         $this->stack = new \SplStack();
-        $this->initRoot($name, $attributes);
+        if ($document === null) {
+            $this->initnew($name, $attributes);
+            return;
+        }
+
+        $this->domDocument = $document;
+        $this->lastCreatedElement = $document->documentElement;
+        $this->rootElement = $this->lastCreatedElement;
+        $this->children();
     }
 
     /**
@@ -45,8 +56,9 @@ class NodeBuilder
      * @param array $attributes
      * @return void
      */
-    private function initRoot($name, array $attributes)
+    private function initnew($name, array $attributes)
     {
+        $this->domDocument = new \DOMDocument('1.0', 'UTF-8');
         $this->elementNode($name, $attributes, '');
         $this->rootElement = $this->lastCreatedElement;
         $this->children();
@@ -137,17 +149,31 @@ class NodeBuilder
         return $this;
     }
 
-    public function assign(NodeBuilder $nodeBuilder)
+    public function trySetPointerToElement(string $query): bool
     {
-        if ($this->stack->isEmpty()) {
-            return $this;
+        $xpath = new \DOMXPath($this->domDocument);
+        $result = $xpath->query($query);
+
+        if ($result->length === 0) {
+            return false;
         }
 
-        /** @var \DOMDocument $currentElement */
-        $currentElement = $this->stack->top();
-        $currentElement->appendChild($nodeBuilder->getRootElement());
+        $this->lastCreatedElement = $result->item(0);
+        $this->children();
 
-        return $this;
+        return true;
+    }
+
+    public function isExistByPath(string $path): bool
+    {
+        $xpath = new \DOMXPath($this->domDocument);
+        $result = $xpath->query($path);
+
+        if ($result->length === 0) {
+            return false;
+        }
+
+        return true;
     }
 
     public function getRootElement()

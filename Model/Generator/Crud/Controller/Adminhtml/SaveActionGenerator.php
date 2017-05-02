@@ -61,7 +61,7 @@ class SaveActionGenerator extends AbstractAction
             ->finishBuilding()
 
             ->startPropertyBuilding('resultRedirectFactory')
-                ->markAsPrivate()
+                ->markAsProtected()
             ->finishBuilding()
 
             ->startPropertyBuilding('entityRepository')
