@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
  * (c) 2016. Rostyslav Tymoshenko <krifollk@gmail.com>
@@ -9,7 +12,6 @@
 namespace Krifollk\CodeGenerator\Console\Command;
 
 use Krifollk\CodeGenerator\Model\Command\Triad;
-use Magento\Framework\App\ResourceConnection;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -62,10 +64,7 @@ class TriadGenerateCommand extends AbstractCommand
             ->addArgument(self::MODULE_NAME_ARGUMENT, InputArgument::REQUIRED, 'Module name')
             ->addArgument(self::ENTITY_NAME_ARGUMENT, InputArgument::REQUIRED, 'Entity name')
             ->addArgument(self::TABLE_NAME_ARGUMENT, InputArgument::REQUIRED, 'Table name');
-
-        parent::configure();
     }
-
 
     /**
      * @todo
@@ -78,8 +77,7 @@ class TriadGenerateCommand extends AbstractCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $moduleName = $input->getArgument(self::MODULE_NAME_ARGUMENT);
-        $this->validateModuleName($moduleName);
+        $moduleName = $this->createModuleNameEntity($input->getArgument(self::MODULE_NAME_ARGUMENT));
         $tableName = $input->getArgument(self::TABLE_NAME_ARGUMENT);
         $entityName = ucfirst($input->getArgument(self::ENTITY_NAME_ARGUMENT));
 

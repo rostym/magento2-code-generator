@@ -1,0 +1,19 @@
+<?php
+
+namespace {{ namespace }};
+
+/**
+ * Interface {{ entityName }}
+ *
+ * @package {{ namespace }}
+ */
+interface {{ entityName }}Interface
+{
+    /**#@+
+     * Constants for keys of data array.
+     */
+{{ constants }}
+    /**#@-*/
+
+{{ gettersSetters }}
+}

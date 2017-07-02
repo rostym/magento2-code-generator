@@ -9,9 +9,9 @@
 namespace Krifollk\CodeGenerator\Test\Integration\Generator\Triad;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\Generator\Triad\InterfacePart;
+use Krifollk\CodeGenerator\Model\Generator\Triad\EntityInterfaceGenerator;
 use Krifollk\CodeGenerator\Model\TableInfo;
-use Magento\Framework\App\ResourceConnection;
+
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 
@@ -41,9 +41,9 @@ class InterfacePartTest extends \PHPUnit_Framework_TestCase
      */
     public function generate(array $inputData, array $resultData)
     {
-        /** @var InterfacePart $interfacePart */
+        /** @var EntityInterfaceGenerator $interfacePart */
         $interfacePart = Bootstrap::getObjectManager()->create(
-            InterfacePart::class,
+            EntityInterfaceGenerator::class,
             [
                 'tableName'  => self::TABLE_NAME,
                 'moduleName' => $inputData['moduleName'],

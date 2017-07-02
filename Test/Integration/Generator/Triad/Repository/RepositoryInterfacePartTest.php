@@ -9,7 +9,7 @@
 namespace Krifollk\CodeGenerator\Test\Integration\Generator\Triad\Repository;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryInterfacePart;
+use Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryInterfaceGenerator;
 use Magento\TestFramework\Helper\Bootstrap;
 
 /**
@@ -30,7 +30,7 @@ class RepositoryInterfacePartTest extends \PHPUnit_Framework_TestCase
     {
         $repositoryInterfaceGenerator = Bootstrap::getObjectManager()
             ->create(
-                RepositoryInterfacePart::class,
+                RepositoryInterfaceGenerator::class,
                 [
                     'moduleName'         => $inputData['moduleName'],
                     'entityName'         => $inputData['entityName'],
@@ -38,7 +38,7 @@ class RepositoryInterfacePartTest extends \PHPUnit_Framework_TestCase
                 ]
             );
 
-        /** @var RepositoryInterfacePart $repositoryInterfaceGenerator */
+        /** @var RepositoryInterfaceGenerator $repositoryInterfaceGenerator */
         $result = $repositoryInterfaceGenerator->generate();
 
         self::assertInstanceOf(GeneratorResultInterface::class, $result);

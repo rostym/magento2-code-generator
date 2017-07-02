@@ -1,101 +1,95 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
- * (c) 2016. Rostyslav Tymoshenko <krifollk@gmail.com>
+ * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
 namespace Krifollk\CodeGenerator\Model\Command;
 
-use Krifollk\CodeGenerator\Model\Generator\Triad\CollectionPartFactory;
-use Krifollk\CodeGenerator\Model\Generator\Triad\InterfacePartFactory;
-use Krifollk\CodeGenerator\Model\Generator\Triad\ModelFactory;
-use Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryInterfacePartFactory;
-use Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryPartFactory;
-use Krifollk\CodeGenerator\Model\Generator\Triad\ResourcePartFactory;
+use Krifollk\CodeGenerator\Api\ModulesDirProviderInterface;
+use Krifollk\CodeGenerator\Model\Generator\NameUtil;
+use Krifollk\CodeGenerator\Model\Generator\Triad\CollectionGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Triad\DiGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Triad\EntityInterfaceGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Triad\EntityGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryInterfaceGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Triad\ResourceGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Triad\SearchResultInterfaceGenerator;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
-use Magento\Framework\Filesystem\DriverInterface;
+use Krifollk\CodeGenerator\Model\ModuleNameEntity;
+use Krifollk\CodeGenerator\Model\TableDescriber;
 
 /**
  * Class Triad
  *
- * Helper class for generate model triad
- *
  * @package Krifollk\CodeGenerator\Model\Command
  */
-class Triad
+class Triad extends AbstractCommand
 {
-    /**
-     * @var ModelFactory
-     */
-    private $modelFactory;
+    /** @var EntityGenerator */
+    private $entityGenerator;
 
-    /**
-     * @var InterfacePartFactory
-     */
-    private $interfacePartFactory;
+    /** @var EntityInterfaceGenerator */
+    private $interfaceGenerator;
 
-    /**
-     * @var ResourcePartFactory
-     */
-    private $resourcePartFactory;
+    /** @var ResourceGenerator */
+    private $resourceGenerator;
 
-    /**
-     * @var CollectionPartFactory
-     */
-    private $collectionPartFactory;
+    /** @var CollectionGenerator */
+    private $collectionGenerator;
 
-    /**
-     * @var RepositoryInterfacePartFactory
-     */
-    private $repositoryInterfacePartFactory;
+    /** @var RepositoryInterfaceGenerator */
+    private $repositoryInterfaceGenerator;
 
-    /**
-     * @var RepositoryPartFactory
-     */
-    private $repositoryPart;
+    /** @var RepositoryGenerator */
+    private $repositoryGenerator;
 
-    /**
-     * @var \Magento\Framework\Filesystem\Driver\File
-     */
-    private $file;
+    /** @var TableDescriber */
+    protected $tableDescriber;
 
-    /**
-     * Triad constructor.
-     *
-     * @param ModelFactory                              $modelFactory
-     * @param InterfacePartFactory                      $interfacePartFactory
-     * @param ResourcePartFactory                       $resourcePartFactory
-     * @param CollectionPartFactory                     $collectionPartFactory
-     * @param RepositoryInterfacePartFactory            $repositoryInterfacePartFactory
-     * @param RepositoryPartFactory                     $repositoryPart
-     * @param \Magento\Framework\Filesystem\Driver\File $file
-     */
+    /** @var DiGenerator */
+    private $diGenerator;
+
+    /** @var SearchResultInterfaceGenerator */
+    private $searchResultInterfaceGenerator;
+
     public function __construct(
-        ModelFactory $modelFactory,
-        InterfacePartFactory $interfacePartFactory,
-        ResourcePartFactory $resourcePartFactory,
-        CollectionPartFactory $collectionPartFactory,
-        RepositoryInterfacePartFactory $repositoryInterfacePartFactory,
-        RepositoryPartFactory $repositoryPart,
-        \Magento\Framework\Filesystem\Driver\File $file
+        EntityGenerator $entityGenerator,
+        EntityInterfaceGenerator $interfaceGenerator,
+        ResourceGenerator $resourceGenerator,
+        CollectionGenerator $collectionGenerator,
+        RepositoryInterfaceGenerator $repositoryInterfaceGenerator,
+        RepositoryGenerator $repositoryGenerator,
+        DiGenerator $diGenerator,
+        \Magento\Framework\Filesystem\Driver\File $file,
+        TableDescriber $tableDescriber,
+        ModulesDirProviderInterface $modulesDirProvider,
+        SearchResultInterfaceGenerator $searchResultInterfaceGenerator
     ) {
-        $this->modelFactory = $modelFactory;
-        $this->interfacePartFactory = $interfacePartFactory;
-        $this->resourcePartFactory = $resourcePartFactory;
-        $this->collectionPartFactory = $collectionPartFactory;
-        $this->repositoryInterfacePartFactory = $repositoryInterfacePartFactory;
-        $this->repositoryPart = $repositoryPart;
-        $this->file = $file;
+        $this->entityGenerator = $entityGenerator;
+        $this->interfaceGenerator = $interfaceGenerator;
+        $this->resourceGenerator = $resourceGenerator;
+        $this->collectionGenerator = $collectionGenerator;
+        $this->repositoryInterfaceGenerator = $repositoryInterfaceGenerator;
+        $this->repositoryGenerator = $repositoryGenerator;
+        $this->tableDescriber = $tableDescriber;
+        $this->diGenerator = $diGenerator;
+        $this->searchResultInterfaceGenerator = $searchResultInterfaceGenerator;
+        parent::__construct($file, $modulesDirProvider);
     }
 
     /**
      * Generate triad
      *
-     * @param string $moduleName
-     * @param string $tableName
-     * @param string $entityName
+     * @param ModuleNameEntity $moduleName
+     * @param string           $tableName
+     * @param string           $entityName
      *
      * @return \Generator
      * @throws \Magento\Framework\Exception\FileSystemException
@@ -103,172 +97,94 @@ class Triad
      * @throws \Zend\Code\Generator\Exception\InvalidArgumentException
      * @throws \InvalidArgumentException
      */
-    public function generate($moduleName, $tableName, $entityName)
+    public function generate(ModuleNameEntity $moduleName, string $tableName, string $entityName)
     {
         /** @var GeneratorResult[] $entities */
-        $entities = [];
+        $entities = $this->prepareEntities($moduleName, $tableName, $entityName);
 
-        $entities['interface'] = $this
-            ->createInterfaceGenerator($tableName, $moduleName, $entityName)
-            ->generate();
-
-        $entities['repository'] = $repository = $this
-            ->createRepositoryGenerator($moduleName, $entityName, $entities['interface']->getEntityName())
-            ->generate();
-
-        $entities['repositoryInterface'] = $this
-            ->createRepositoryInterfaceGenerator($moduleName, $entityName, $entities['interface']->getEntityName())
-            ->generate();
-
-        $entities['resource'] = $this
-            ->createResourceModelGenerator($tableName, $moduleName, $entityName)
-            ->generate();
-
-        $entities['model'] = $this
-            ->createModelGenerator(
-                $tableName,
-                $moduleName,
-                $entityName,
-                $entities['interface']->getEntityName(),
-                $entities['resource']->getEntityName()
-            )->generate();
-
-        $entities['collection'] = $this
-            ->createCollectionGenerator(
-                $moduleName,
-                $entityName,
-                $entities['model']->getEntityName(),
-                $entities['resource']->getEntityName()
-            )
-            ->generate();
-        
         return $this->generateFiles($entities);
     }
 
     /**
-     * @param string $tableName
-     * @param string $moduleName
-     * @param string $entityName
+     * @param ModuleNameEntity $moduleName
+     * @param string           $tableName
+     * @param string           $entityName
      *
-     * @return \Krifollk\CodeGenerator\Model\Generator\Triad\InterfacePart
+     * @return GeneratorResult\Container
+     * @throws \Zend\Code\Generator\Exception\InvalidArgumentException
+     * @throws \Zend\Code\Generator\Exception\RuntimeException
+     * @throws \InvalidArgumentException
      */
-    protected function createInterfaceGenerator($tableName, $moduleName, $entityName)
-    {
-        return $this->interfacePartFactory->create([
-            'tableName'  => $tableName,
-            'moduleName' => $moduleName,
-            'entityName' => $entityName,
-        ]);
-    }
+    protected function prepareEntities(
+        ModuleNameEntity $moduleName,
+        string $tableName,
+        string $entityName
+    ): GeneratorResult\Container {
+        $resultContainer = $this->createResultContainer();
+        /** @var TableDescriber\Result $tableDescriberResult */
+        $tableDescriberResult = $this->tableDescriber->describe($tableName);
 
-    /**
-     * @param string $moduleName
-     * @param string $entityName
-     * @param string $modelInterfaceName
-     *
-     * @return \Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryPart
-     */
-    protected function createRepositoryGenerator($moduleName, $entityName, $modelInterfaceName)
-    {
-        return $this->repositoryPart->create([
-            'moduleName'         => $moduleName,
-            'entityName'         => $entityName,
-            'modelInterfaceName' => $modelInterfaceName,
-        ]);
-    }
-
-    /**
-     * @param string $moduleName
-     * @param string $entityName
-     * @param string $modelInterfaceName
-     *
-     * @return \Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryInterfacePart
-     */
-    protected function createRepositoryInterfaceGenerator(
-        $moduleName,
-        $entityName,
-        $modelInterfaceName
-    ) {
-        return $this->repositoryInterfacePartFactory->create([
-            'moduleName'         => $moduleName,
-            'entityName'         => $entityName,
-            'modelInterfaceName' => $modelInterfaceName,
-        ]);
-    }
-
-    /**
-     * @param string $tableName
-     * @param string $moduleName
-     * @param string $entityName
-     *
-     * @return \Krifollk\CodeGenerator\Model\Generator\Triad\ResourcePart
-     */
-    protected function createResourceModelGenerator($tableName, $moduleName, $entityName)
-    {
-        return $this->resourcePartFactory->create(
-            [
-                'tableName'  => $tableName,
-                'moduleName' => $moduleName,
-                'entityName' => $entityName,
+        $resultContainer->insert('entity_interface', $this->interfaceGenerator->generate($moduleName, [
+                'entityName'           => $entityName,
+                'tableDescriberResult' => $tableDescriberResult
             ]
-        );
-    }
+        ));
 
-    /**
-     * @param string $tableName
-     * @param string $moduleName
-     * @param string $entityName
-     * @param string $interfaceName
-     * @param string $resourceName
-     *
-     * @return \Krifollk\CodeGenerator\Model\Generator\Triad\Model
-     */
-    protected function createModelGenerator($tableName, $moduleName, $entityName, $interfaceName, $resourceName)
-    {
-        return $this->modelFactory->create(
-            [
-                'tableName'     => $tableName,
-                'moduleName'    => $moduleName,
+        $resultContainer->insert('resource', $this->resourceGenerator->generate($moduleName, [
+                'tableDescriberResult' => $tableDescriberResult,
+                'entityName'           => $entityName
+            ]
+        ));
+
+        $resultContainer->insert('entity', $this->entityGenerator->generate($moduleName, [
+                'entityName'           => $entityName,
+                'entityInterface'      => $resultContainer->get('entity_interface')->getEntityName(),
+                'tableDescriberResult' => $tableDescriberResult,
+                'resourceEntityName'   => $resultContainer->get('resource')->getEntityName(),
+                'entityCollectionName' => NameUtil::generateCollectionName($moduleName, $entityName),
+            ]
+        ));
+
+        $resultContainer->insert('collection', $this->collectionGenerator->generate($moduleName, [
                 'entityName'    => $entityName,
-                'interfaceName' => $interfaceName,
-                'resourceName'  => $resourceName,
+                'resourceClass' => $resultContainer->get('resource')->getEntityName(),
+                'modelClass'    => $resultContainer->get('entity')->getEntityName()
             ]
-        );
-    }
+        ));
 
-    /**
-     * @param string $moduleName
-     * @param string $entityName
-     * @param string $modelClass
-     * @param string $resourceClass
-     *
-     * @return \Krifollk\CodeGenerator\Model\Generator\Triad\CollectionPart
-     */
-    protected function createCollectionGenerator($moduleName, $entityName, $modelClass, $resourceClass)
-    {
-        return $this->collectionPartFactory->create(
+        $resultContainer->insert('search_result_interface', $this->searchResultInterfaceGenerator->generate(
+            $moduleName,
             [
-                'moduleName'    => $moduleName,
-                'entityName'    => $entityName,
-                'modelClass'    => $modelClass,
-                'resourceClass' => $resourceClass,
+                'entityName'       => $entityName,
+                'entityInterface'  => $resultContainer->get('entity_interface')->getEntityName(),
+                'primaryFieldName' => $tableDescriberResult->primaryColumn()
             ]
-        );
-    }
+        ));
 
-    /**
-     * @param array $entities
-     *
-     * @return \Generator
-     * @throws \Magento\Framework\Exception\FileSystemException
-     */
-    protected function generateFiles(array $entities)
-    {
-        /** @var GeneratorResult $entity */
-        foreach ($entities as $entity) {
-            $this->file->createDirectory($entity->getDestinationDir(), DriverInterface::WRITEABLE_DIRECTORY_MODE);
-            $this->file->filePutContents($entity->getDestinationFile(), $entity->getContent());
-            yield $entity->getDestinationFile();
-        }
+        $resultContainer->insert('repository_interface', $this->repositoryInterfaceGenerator->generate($moduleName, [
+            'entityName'            => $entityName,
+            'entityInterfaceName'   => $resultContainer->get('entity_interface')->getEntityName(),
+            'searchResultInterface' => $resultContainer->get('search_result_interface')->getEntityName()
+        ]));
+
+        $resultContainer->insert('repository', $this->repositoryGenerator->generate($moduleName, [
+            'entityName'              => $entityName,
+            'entityInterfaceName'     => $resultContainer->get('entity_interface')->getEntityName(),
+            'resourceEntityName'      => $resultContainer->get('resource')->getEntityName(),
+            'entityCollectionName'    => $resultContainer->get('collection')->getEntityName(),
+            'repositoryInterfaceName' => $resultContainer->get('repository_interface')->getEntityName(),
+            'searchResultName'        => $resultContainer->get('search_result_interface')->getEntityName()
+        ]));
+
+
+        $resultContainer->insert('di', $this->diGenerator->generate($moduleName, [
+            'entityClass'           => $resultContainer->get('entity')->getEntityName(),
+            'entityInterface'       => $resultContainer->get('entity_interface')->getEntityName(),
+            'repository'            => $resultContainer->get('repository')->getEntityName(),
+            'repositoryInterface'   => $resultContainer->get('repository_interface')->getEntityName(),
+            'searchResultInterface' => $resultContainer->get('search_result_interface')->getEntityName()
+        ]));
+
+        return $resultContainer;
     }
 }

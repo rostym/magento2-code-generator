@@ -9,9 +9,9 @@
 namespace Krifollk\CodeGenerator\Test\Integration\Generator\Triad;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\Generator\Triad\ResourcePart;
+use Krifollk\CodeGenerator\Model\Generator\Triad\ResourceGenerator;
 use Krifollk\CodeGenerator\Model\TableInfo;
-use Magento\Framework\App\ResourceConnection;
+
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 
@@ -42,9 +42,9 @@ class ResourcePartTest extends \PHPUnit_Framework_TestCase
      */
     public function generate(array $inputData, array $resultData)
     {
-        /** @var ResourcePart $resourcePart */
+        /** @var ResourceGenerator $resourcePart */
         $resourcePart = Bootstrap::getObjectManager()->create(
-            ResourcePart::class,
+            ResourceGenerator::class,
             [
                 'tableName'  => self::TABLE_NAME,
                 'moduleName' => $inputData['moduleName'],

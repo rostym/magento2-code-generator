@@ -1,0 +1,12 @@
+<?php
+
+namespace {{ namespace }};
+
+/**
+ * Class Collection
+ *
+ * @package {{ namespace }}
+ */
+class Collection extends \Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult
+{
+}

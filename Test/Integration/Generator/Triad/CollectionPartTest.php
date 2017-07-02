@@ -9,7 +9,7 @@
 namespace Krifollk\CodeGenerator\Test\Integration\Generator\Triad;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\Generator\Triad\CollectionPart;
+use Krifollk\CodeGenerator\Model\Generator\Triad\CollectionGenerator;
 use Magento\TestFramework\Helper\Bootstrap;
 
 /**
@@ -32,7 +32,7 @@ class CollectionPartTest extends \PHPUnit_Framework_TestCase
     {
         $collectionGenerator = Bootstrap::getObjectManager()
             ->create(
-                CollectionPart::class,
+                CollectionGenerator::class,
                 [
                     'moduleName'    => $inputData['moduleName'],
                     'entityName'    => $inputData['entityName'],
@@ -41,7 +41,7 @@ class CollectionPartTest extends \PHPUnit_Framework_TestCase
                 ]
             );
 
-        /** @var CollectionPart $collectionGenerator */
+        /** @var CollectionGenerator $collectionGenerator */
         $result = $collectionGenerator->generate();
 
         self::assertInstanceOf(GeneratorResultInterface::class, $result);

@@ -1,14 +1,17 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
- * (c) 2016. Rostyslav Tymoshenko <krifollk@gmail.com>
+ * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
 namespace Krifollk\CodeGenerator\Console\Command;
 
-use InvalidArgumentException;
+use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Symfony\Component\Console\Command\Command;
 
 /**
@@ -19,17 +22,15 @@ use Symfony\Component\Console\Command\Command;
 abstract class AbstractCommand extends Command
 {
     /**
+     * Create module name entity
+     *
      * @param string $moduleName
      *
-     * @return bool
+     * @return ModuleNameEntity
      * @throws \InvalidArgumentException
      */
-    protected function validateModuleName($moduleName)
+    protected function createModuleNameEntity($moduleName): ModuleNameEntity
     {
-        if (!preg_match('/[A-Z]+[A-Za-z0-9]+\/[A-Z]+[A-Z0-9a-z]+/', $moduleName)) {
-            throw new InvalidArgumentException('Wrong module name. Example: Test/Module');
-        }
-
-        return true;
+        return new ModuleNameEntity($moduleName);
     }
 }

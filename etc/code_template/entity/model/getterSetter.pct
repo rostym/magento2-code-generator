@@ -1,0 +1,17 @@
+    /**
+     * @inheritdoc
+     */
+    public function get{{ name }}()
+    {
+        return $this->_getData(self::{{ constField }});
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function set{{ name }}($value)
+    {
+        $this->setData(self::{{ constField }}, $value);
+
+        return $this;
+    }

@@ -1,0 +1,56 @@
+<?php
+
+namespace {{ namespace }};
+
+/**
+ * Class Delete
+ *
+ * @method \Magento\Framework\App\Request\Http getRequest()
+ * @method \Magento\Framework\App\Response\Http getResponse()
+ *
+ * @package {{ namespace }}
+ */
+class Delete extends \Magento\Backend\App\Action
+{
+    /** @var {{ entityRepositoryInterface }} */
+    private $entityRepository;
+
+    /**
+     * Delete constructor.
+     *
+     * @param \Magento\Backend\App\Action\Context    $context
+     * @param {{ entityRepositoryInterface }} $entityRepository
+     */
+    public function __construct(
+        \Magento\Backend\App\Action\Context $context,
+        {{ entityRepositoryInterface }} $entityRepository
+    ) {
+        $this->entityRepository = $entityRepository;
+        parent::__construct($context);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function execute()
+    {
+        /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
+        $resultRedirect = $this->resultRedirectFactory->create();
+        $id = $this->getRequest()->getParam('{{ requestIdFiledName }}');
+        if ($id === null) {
+            $this->messageManager->addErrorMessage(__('We can\'t find an entity to delete.'));
+
+            return $resultRedirect->setPath('*/*/');
+        }
+        try {
+            $this->entityRepository->deleteById($id);
+            $this->messageManager->addSuccessMessage(__('Entity has been deleted.'));
+
+            return $resultRedirect->setPath('*/*/');
+        } catch (\Exception $e) {
+            $this->messageManager->addErrorMessage($e->getMessage());
+
+            return $resultRedirect->setPath('*/*/edit', ['{{ requestIdFiledName }}' => $id]);
+        }
+    }
+}

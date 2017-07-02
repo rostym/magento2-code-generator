@@ -9,9 +9,9 @@
 namespace Krifollk\CodeGenerator\Test\Integration\Generator\Triad;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\Generator\Triad\Model;
+use Krifollk\CodeGenerator\Model\Generator\Triad\EntityGenerator;
 use Krifollk\CodeGenerator\Model\TableInfo;
-use Magento\Framework\App\ResourceConnection;
+
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 
@@ -41,9 +41,9 @@ class ModelTest extends \PHPUnit_Framework_TestCase
      */
     public function generate(array $inputData, array $resultData)
     {
-        /** @var Model $model */
+        /** @var EntityGenerator $model */
         $model = Bootstrap::getObjectManager()->create(
-            Model::class,
+            EntityGenerator::class,
             [
                 'tableName'     => self::TABLE_NAME,
                 'moduleName'    => $inputData['moduleName'],

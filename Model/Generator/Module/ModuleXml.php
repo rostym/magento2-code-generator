@@ -1,7 +1,10 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
- * (c) 2016. Rostyslav Tymoshenko <krifollk@gmail.com>
+ * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
@@ -11,6 +14,8 @@ namespace Krifollk\CodeGenerator\Model\Generator\Module;
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
 use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
+use Krifollk\CodeGenerator\Model\ModuleNameEntity;
+use Krifollk\CodeGenerator\Model\NodeBuilder;
 
 /**
  * Class ModuleXml
@@ -19,75 +24,62 @@ use Krifollk\CodeGenerator\Model\GeneratorResult;
  */
 class ModuleXml extends AbstractGenerator
 {
-    const FILE            = BP . '/app/code/%s/etc/module.xml';
+    const FILE = '%s/etc/module.xml';
     const DEFAULT_VERSION = '0.1.0';
 
     /**
-     * Module version
-     *
-     * @var string
+     * @inheritdoc
      */
-    private $version;
-
-    /**
-     * ModuleXml constructor.
-     *
-     * @param string $moduleName
-     * @param string $version
-     */
-    public function __construct($moduleName, $version = '')
+    protected function requiredArguments(): array
     {
-        parent::__construct($moduleName);
-        $this->version = $version;
+        return ['version'];
     }
 
     /**
-     * Generate entity
-     *
-     * @return GeneratorResultInterface
+     * @inheritdoc
      */
-    public function generate()
-    {
+    protected function internalGenerate(
+        ModuleNameEntity $moduleNameEntity,
+        array $additionalArguments = []
+    ): GeneratorResultInterface {
+        $version = $additionalArguments['version'] ?? self::DEFAULT_VERSION;
+
         return new GeneratorResult(
-            $this->generateContent(),
-            $this->generateFilePath(),
-            null
+            $this->generateContent($moduleNameEntity, $version),
+            $this->generateFilePath($moduleNameEntity)
         );
     }
 
     /**
      * Generate module.xml content
      *
+     * @param ModuleNameEntity $moduleNameEntity
+     * @param string           $version
+     *
      * @return string
      */
-    protected function generateContent()
+    protected function generateContent(ModuleNameEntity $moduleNameEntity, string $version): string
     {
-        $version = $this->version ?: self::DEFAULT_VERSION;
-        $moduleName = str_replace('/', '_', $this->moduleName);
+        $moduleName = $moduleNameEntity->value();
 
-        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $nodeBuilder = (new NodeBuilder('config', [
+                'xmlns:xsi'                     => 'http://www.w3.org/2001/XMLSchema-instance',
+                'xsi:noNamespaceSchemaLocation' => 'urn:magento:framework:Module/etc/module.xsd'
+            ]
+        ))->elementNode('module', ['name' => $moduleName, 'setup_version' => $version]);
 
-        $config = $dom->createElement('config');
-        $config->setAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
-        $config->setAttribute('xsi:noNamespaceSchemaLocation', 'urn:magento:framework:Module/etc/module.xsd');
-
-        $module = $dom->createElement('module');
-        $module->setAttribute('name', $moduleName);
-        $module->setAttribute('setup_version', $version);
-
-        $config->appendChild($module);
-
-        $dom->appendChild($config);
-        $dom->formatOutput = true;
-
-        return $dom->saveXML();
+        return $nodeBuilder->toXml();
     }
 
     /**
+     * Generate file path
+     *
+     * @param ModuleNameEntity $moduleNameEntity
+     *
      * @return string
      */
-    protected function generateFilePath()
+    protected function generateFilePath(ModuleNameEntity $moduleNameEntity): string
     {
-        return sprintf(self::FILE, $this->moduleName);
+        return sprintf(self::FILE, $moduleNameEntity->asPartOfPath());
     }
 }
