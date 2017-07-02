@@ -1,0 +1,97 @@
+<?php
+
+namespace {{ namespace }};
+
+/**
+ * Class Save
+ *
+ * @method \Magento\Framework\App\Request\Http getRequest()
+ * @method \Magento\Framework\App\Response\Http getResponse()
+ *
+ * @package {{ namespace }}
+ */
+class Save extends \Magento\Backend\App\Action
+{
+    /** @var \Magento\Framework\App\Request\DataPersistorInterface */
+    private $dataPersistor;
+
+    /** @inheritdoc */
+    protected $resultRedirectFactory;
+
+    /** @var {{ entityRepository }} */
+    private $entityRepository;
+
+    /** @var {{ entityFactory }} */
+    private $entityFactory;
+
+    /** @var \Magento\Framework\Api\DataObjectHelper */
+    private $dataObjectHelper;
+
+    /**
+     * Save constructor.
+     *
+     * @param \Magento\Backend\App\Action\Context                   $context
+     * @param \Magento\Framework\App\Request\DataPersistorInterface $dataPersistor
+     * @param {{ entityRepository }}                $entityRepository
+     * @param {{ entityFactory }}              $entityFactory
+     * @param \Magento\Framework\Api\DataObjectHelper $dataObjectHelper
+     */
+    public function __construct(
+        \Magento\Backend\App\Action\Context $context,
+        \Magento\Framework\App\Request\DataPersistorInterface $dataPersistor,
+        {{ entityRepository }} $entityRepository,
+        {{ entityFactory }} $entityFactory,
+        \Magento\Framework\Api\DataObjectHelper $dataObjectHelper
+    ) {
+        $this->dataPersistor = $dataPersistor;
+        $this->entityRepository = $entityRepository;
+        $this->entityFactory = $entityFactory;
+        $this->resultRedirectFactory = $context->getResultRedirectFactory();
+        $this->dataObjectHelper = $dataObjectHelper;
+        parent::__construct($context);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function execute()
+    {
+        /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
+        $resultRedirect = $this->resultRedirectFactory->create();
+        $data = $this->getRequest()->getPostValue();
+
+        if (!$data) {
+            return $resultRedirect->setPath('*/*/');
+        }
+
+        $id = $this->getRequest()->getParam('{{ idFieldName }}');
+
+        try {
+            if ($id === null) {
+                $entity = $this->entityFactory->create();
+            } else {
+                $entity = $this->entityRepository->getById($id);
+            }
+
+            $this->dataObjectHelper->populateWithArray($entity, $data, {{ entityInterface }}::class);
+            $this->entityRepository->save($entity);
+            $this->messageManager->addSuccessMessage(__('You saved the entity.'));
+            $this->dataPersistor->clear('{{ dataPersistorKey }}');
+
+            if ($this->getRequest()->getParam('back')) {
+                return $resultRedirect->setPath('*/*/edit', ['{{ idFieldName }}' => $entity->getId()]);
+            }
+
+            return $resultRedirect->setPath('*/*/');
+
+        } catch (\Magento\Framework\Exception\LocalizedException $e) {
+            $this->messageManager->addErrorMessage($e->getMessage());
+        } catch (\Exception $e) {
+            $this->messageManager->addExceptionMessage($e, __('Something went wrong while saving the entity.'));
+        }
+
+        $this->dataPersistor->set('{{ dataPersistorKey }}', $data);
+
+        return $resultRedirect->setPath('*/*/edit', ['{{ idFieldName }}' => $this->getRequest()->getParam('{{ idFieldName }}')]);
+    }
+}

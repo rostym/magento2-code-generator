@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
+use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 
 /**
@@ -20,23 +20,37 @@ use Krifollk\CodeGenerator\Model\ModuleNameEntity;
  *
  * @package Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml
  */
-class InlineEditActionGenerator extends AbstractGenerator
+class InlineEditActionGenerator extends AbstractAction
 {
     /**
      * @inheritdoc
      */
     protected function requiredArguments(): array
     {
-        // TODO: Implement requiredArguments() method.
+        return array_merge(parent::requiredArguments(), ['entityRepository', 'entityName', 'entityInterface']);
     }
 
     /**
      * @inheritdoc
+     * @throws \RuntimeException
      */
     protected function internalGenerate(
         ModuleNameEntity $moduleNameEntity,
         array $additionalArguments = []
     ): GeneratorResultInterface {
-        // TODO: Implement internalGenerate() method.
+        $entityName = $additionalArguments['entityName'];
+        $entityRepository = $additionalArguments['entityRepository'];
+        $entityInterface = $additionalArguments['entityInterface'];
+
+        return new GeneratorResult(
+            $this->codeTemplateEngine->render('crud/controller/adminhtml/inlineEdit', [
+                    'namespace'                 => $this->generateNamespace($moduleNameEntity, $entityName),
+                    'entityRepositoryInterface' => $entityRepository,
+                    'entityInterface'           => $entityInterface
+                ]
+            ),
+            $this->generateFilePath($moduleNameEntity, $entityName, 'InlineEdit'),
+            $this->generateEntityName($moduleNameEntity, $entityName, 'InlineEdit')
+        );
     }
 }

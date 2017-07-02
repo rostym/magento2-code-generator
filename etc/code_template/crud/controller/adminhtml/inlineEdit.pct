@@ -1,0 +1,80 @@
+<?php
+
+namespace {{ namespace }};
+
+use Magento\Backend\App\Action;
+
+/**
+ * Class InlineEdit
+ *
+ * @method \Magento\Framework\App\Request\Http getRequest()
+ * @method \Magento\Framework\App\Response\Http getResponse()
+ *
+ * @package {{ namespace }}
+ */
+class InlineEdit extends \Magento\Backend\App\Action
+{
+    /** @var {{ entityRepositoryInterface }} */
+    private $entityRepository;
+
+    /** @var \Magento\Framework\Api\DataObjectHelper */
+    private $dataObjectHelper;
+
+    /**
+     * InlineEdit constructor.
+     *
+     * @param Action\Context                          $context
+     * @param {{ entityRepositoryInterface }}  $entityRepository
+     * @param \Magento\Framework\Api\DataObjectHelper $dataObjectHelper
+     */
+    public function __construct(
+        Action\Context $context,
+        {{ entityRepositoryInterface }} $entityRepository,
+        \Magento\Framework\Api\DataObjectHelper $dataObjectHelper
+    ) {
+        $this->entityRepository = $entityRepository;
+        $this->dataObjectHelper = $dataObjectHelper;
+        parent::__construct($context);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function execute()
+    {
+        /** @var \Magento\Framework\Controller\Result\Json $resultJson */
+        $resultJson = $this->resultFactory->create(\Magento\Framework\Controller\ResultFactory::TYPE_JSON);
+        $error = false;
+        $messages = [];
+
+        $items = $this->getRequest()->getParam('items', []);
+        if (!(count($items) && $this->getRequest()->getParam('isAjax'))) {
+            return $resultJson->setData([
+                'messages' => [__('Please correct the data sent.')],
+                'error'    => true,
+            ]);
+        }
+
+        foreach (array_keys($items) as $itemId) {
+            try {
+                $entity = $this->entityRepository->getById($itemId);
+                $this->dataObjectHelper->populateWithArray(
+                    $entity,
+                    $items[$itemId],
+                    {{ entityInterface }}::class
+                );
+                $this->entityRepository->save($entity);
+            } catch (\Magento\Framework\Exception\LocalizedException $e) {
+                $messages[] = sprintf('[%s]: %s', $itemId, $e->getMessage());
+            } catch (\Exception $e) {
+                $messages[] = sprintf('[%s]: %s', $itemId, __('Something went wrong while saving the entity.'));
+                $error = true;
+            }
+        }
+
+        return $resultJson->setData([
+            'messages' => $messages,
+            'error'    => $error
+        ]);
+    }
+}

@@ -12,12 +12,12 @@ declare(strict_types=1);
 namespace Krifollk\CodeGenerator\Model\Generator\Triad;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\ClassBuilder;
+
 use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
 use Krifollk\CodeGenerator\Model\Generator\NameUtil;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
-use Zend\Code\Generator\FileGenerator;
+
 
 /**
  * Class CollectionPart
@@ -26,6 +26,19 @@ use Zend\Code\Generator\FileGenerator;
  */
 class CollectionGenerator extends AbstractGenerator
 {
+    /** @var \Krifollk\CodeGenerator\Model\CodeTemplate\Engine */
+    private $codeTemplateEngine;
+
+    /**
+     * RepositoryGenerator constructor.
+     *
+     * @param \Krifollk\CodeGenerator\Model\CodeTemplate\Engine $codeTemplateEngine
+     */
+    public function __construct(\Krifollk\CodeGenerator\Model\CodeTemplate\Engine $codeTemplateEngine)
+    {
+        $this->codeTemplateEngine = $codeTemplateEngine;
+    }
+
     /**
      * @inheritdoc
      */
@@ -36,6 +49,7 @@ class CollectionGenerator extends AbstractGenerator
 
     /**
      * @inheritdoc
+     * @throws \RuntimeException
      */
     protected function internalGenerate(
         ModuleNameEntity $moduleNameEntity,
@@ -46,46 +60,17 @@ class CollectionGenerator extends AbstractGenerator
         $modelClass = $additionalArguments['modelClass'];
         $className = NameUtil::generateCollectionName($moduleNameEntity, $entityName);
 
-        $classBuilder = new ClassBuilder($className);
-
-        $classBuilder
-            ->extendedFrom('\Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection')
-            ->startDocBlockBuilding()
-                ->disableWordWrap()
-                ->shortDescription(sprintf('Class %s', $entityName))
-                ->addTag('method', sprintf('%s getResource()', $resourceClass))
-                ->addTag('method', sprintf('%s[] getItems()', $modelClass))
-                ->addTag('method', sprintf('%s[] getItemsByColumnValue($column, $value)', $modelClass))
-                ->addTag('method', sprintf('%s getFirstItem()', $modelClass))
-                ->addTag('method', sprintf('%s getLastItem()', $modelClass))
-                ->addTag('method', sprintf('%s getItemByColumnValue($column, $value)', $modelClass))
-                ->addTag('method', sprintf('%s getItemById($idValue)', $modelClass))
-                ->addTag('method', sprintf('%s getNewEmptyItem()', $modelClass))
-                ->addTag('method', sprintf('%s fetchItem()', $modelClass))
-                ->addTag('property', sprintf('%s[] _items', $modelClass))
-                ->addTag('property', sprintf('%s _resource', $resourceClass))
-            ->finishBuilding()
-            ->startPropertyBuilding('_eventPrefix')
-                ->markAsProtected()
-                ->defaultValue(mb_strtolower(sprintf('%s_%s_collection', $moduleNameEntity->value(), $entityName)))
-            ->finishBuilding()
-            ->startPropertyBuilding('_eventObject')
-                ->markAsProtected()
-                ->defaultValue('object')
-            ->finishBuilding()
-            ->startMethodBuilding('_construct')
-                ->markAsProtected()
-                ->withBody(sprintf('$this->_init(%s::class, %s::class);', $modelClass, $resourceClass))
-                ->startDocBlockBuilding()
-                    ->addTag('inheritdoc', '')
-                ->finishBuilding()
-            ->finishBuilding();
-
-        $fileGenerator = new FileGenerator();
-        $fileGenerator->setClass($classBuilder->build());
+        $namespace = sprintf('%s\Model\ResourceModel\%s', $moduleNameEntity->asPartOfNamespace(), $entityName);
+        $eventPrefix = mb_strtolower(sprintf('%s_%s_collection', $moduleNameEntity->value(), $entityName));
 
         return new GeneratorResult(
-            $fileGenerator->generate(),
+            $this->codeTemplateEngine->render('entity/collection', [
+                    'namespace'      => $namespace,
+                    'entity'         => $modelClass,
+                    'entityResource' => $resourceClass,
+                    'eventPrefix'    => $eventPrefix
+                ]
+            ),
             sprintf('%s/Model/ResourceModel/%s/Collection.php', $moduleNameEntity->asPartOfPath(), $entityName),
             $className
         );

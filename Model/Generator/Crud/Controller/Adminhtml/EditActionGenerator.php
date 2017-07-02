@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\ClassBuilder;
 use Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent\ListingGenerator;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
@@ -34,6 +33,7 @@ class EditActionGenerator extends AbstractAction
 
     /**
      * @inheritdoc
+     * @throws \RuntimeException
      */
     protected function internalGenerate(
         ModuleNameEntity $moduleNameEntity,
@@ -41,78 +41,15 @@ class EditActionGenerator extends AbstractAction
     ): GeneratorResultInterface {
         $entityName = $additionalArguments['entityName'];
 
-        /** @var ClassBuilder $classGenerator */
-        $classGenerator = new ClassBuilder($this->generateEntityName($moduleNameEntity, $entityName, 'Edit'));
-
-        /** @var \Magento\Framework\Code\Generator\ClassGenerator $generator */
-        $generator = $classGenerator
-            ->extendedFrom('\Magento\Backend\App\Action')
-            ->usesNamespace($this->generateNamespace($moduleNameEntity, $entityName))
-
-            ->startPropertyBuilding('resultPageFactory')
-                ->markAsPrivate()
-            ->finishBuilding()
-
-            ->startPropertyBuilding('entityRepository')
-                ->markAsPrivate()
-            ->finishBuilding()
-
-            ->startMethodBuilding('__construct', $this->getConstructorBody())
-                ->markAsPublic()
-
-                ->startArgumentBuilding('context')
-                    ->type('\Magento\Backend\App\Action\Context')
-                ->finishBuilding()
-
-                ->startArgumentBuilding('resultPageFactory')
-                    ->type('\Magento\Framework\View\Result\PageFactory')
-                ->finishBuilding()
-
-                ->startArgumentBuilding('entityRepository')
-                    ->type($additionalArguments['entityRepository'])
-                ->finishBuilding()
-
-            ->finishBuilding()
-            ->startMethodBuilding('execute', $this->getExecuteBody())
-                ->markAsPublic()
-            ->finishBuilding()
-            ->build();
-
         return new GeneratorResult(
-            $this->wrapToFile($generator)->generate(),
+            $this->codeTemplateEngine->render('crud/controller/adminhtml/edit', [
+                    'namespace'                 => $this->generateNamespace($moduleNameEntity, $entityName),
+                    'entityRepositoryInterface' => $additionalArguments['entityRepository'],
+                    'requestIdFiledName'        => ListingGenerator::REQUEST_FIELD_NAME
+                ]
+            ),
             $this->generateFilePath($moduleNameEntity, $entityName, 'Edit'),
             $this->generateEntityName($moduleNameEntity, $entityName, 'Edit')
         );
-    }
-
-    private function getConstructorBody(): string
-    {
-        return '
-$this->resultPageFactory = $resultPageFactory;
-$this->entityRepository = $entityRepository;
-parent::__construct($context);
-    ';
-    }
-
-    private function getExecuteBody(): string
-    {
-        $requestFieldName = ListingGenerator::REQUEST_FIELD_NAME;
-        return "
-\$id = \$this->getRequest()->getParam('$requestFieldName');
-if (\$id === null) {
-    return \$this->resultPageFactory->create();
-}
-try {
-    \$this->entityRepository->getById(\$id);
-} catch (\Magento\Framework\Exception\NoSuchEntityException \$e) {
-    \$this->messageManager->addErrorMessage(\$e->getMessage());
-    \$resultRedirect = \$this->resultRedirectFactory->create();
-    
-     return \$resultRedirect->setPath('*/*/');
-}
-
-return \$this->resultPageFactory->create();
-
-        ";
     }
 }

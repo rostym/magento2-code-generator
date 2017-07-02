@@ -20,6 +20,7 @@ use Krifollk\CodeGenerator\Model\Generator\Triad\EntityGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryInterfaceGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Triad\ResourceGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Triad\SearchResultInterfaceGenerator;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Krifollk\CodeGenerator\Model\TableDescriber;
@@ -55,6 +56,9 @@ class Triad extends AbstractCommand
     /** @var DiGenerator */
     private $diGenerator;
 
+    /** @var SearchResultInterfaceGenerator */
+    private $searchResultInterfaceGenerator;
+
     public function __construct(
         EntityGenerator $entityGenerator,
         EntityInterfaceGenerator $interfaceGenerator,
@@ -65,7 +69,8 @@ class Triad extends AbstractCommand
         DiGenerator $diGenerator,
         \Magento\Framework\Filesystem\Driver\File $file,
         TableDescriber $tableDescriber,
-        ModulesDirProviderInterface $modulesDirProvider
+        ModulesDirProviderInterface $modulesDirProvider,
+        SearchResultInterfaceGenerator $searchResultInterfaceGenerator
     ) {
         $this->entityGenerator = $entityGenerator;
         $this->interfaceGenerator = $interfaceGenerator;
@@ -75,6 +80,7 @@ class Triad extends AbstractCommand
         $this->repositoryGenerator = $repositoryGenerator;
         $this->tableDescriber = $tableDescriber;
         $this->diGenerator = $diGenerator;
+        $this->searchResultInterfaceGenerator = $searchResultInterfaceGenerator;
         parent::__construct($file, $modulesDirProvider);
     }
 
@@ -146,9 +152,19 @@ class Triad extends AbstractCommand
             ]
         ));
 
+        $resultContainer->insert('search_result_interface', $this->searchResultInterfaceGenerator->generate(
+            $moduleName,
+            [
+                'entityName'       => $entityName,
+                'entityInterface'  => $resultContainer->get('entity_interface')->getEntityName(),
+                'primaryFieldName' => $tableDescriberResult->primaryColumn()
+            ]
+        ));
+
         $resultContainer->insert('repository_interface', $this->repositoryInterfaceGenerator->generate($moduleName, [
-            'entityName'          => $entityName,
-            'entityInterfaceName' => $resultContainer->get('entity_interface')->getEntityName()
+            'entityName'            => $entityName,
+            'entityInterfaceName'   => $resultContainer->get('entity_interface')->getEntityName(),
+            'searchResultInterface' => $resultContainer->get('search_result_interface')->getEntityName()
         ]));
 
         $resultContainer->insert('repository', $this->repositoryGenerator->generate($moduleName, [
@@ -156,14 +172,17 @@ class Triad extends AbstractCommand
             'entityInterfaceName'     => $resultContainer->get('entity_interface')->getEntityName(),
             'resourceEntityName'      => $resultContainer->get('resource')->getEntityName(),
             'entityCollectionName'    => $resultContainer->get('collection')->getEntityName(),
-            'repositoryInterfaceName' => $resultContainer->get('repository_interface')->getEntityName()
+            'repositoryInterfaceName' => $resultContainer->get('repository_interface')->getEntityName(),
+            'searchResultName'        => $resultContainer->get('search_result_interface')->getEntityName()
         ]));
 
+
         $resultContainer->insert('di', $this->diGenerator->generate($moduleName, [
-            'entityClass'         => $resultContainer->get('entity')->getEntityName(),
-            'entityInterface'     => $resultContainer->get('entity_interface')->getEntityName(),
-            'repository'          => $resultContainer->get('repository')->getEntityName(),
-            'repositoryInterface' => $resultContainer->get('repository_interface')->getEntityName()
+            'entityClass'           => $resultContainer->get('entity')->getEntityName(),
+            'entityInterface'       => $resultContainer->get('entity_interface')->getEntityName(),
+            'repository'            => $resultContainer->get('repository')->getEntityName(),
+            'repositoryInterface'   => $resultContainer->get('repository_interface')->getEntityName(),
+            'searchResultInterface' => $resultContainer->get('search_result_interface')->getEntityName()
         ]));
 
         return $resultContainer;

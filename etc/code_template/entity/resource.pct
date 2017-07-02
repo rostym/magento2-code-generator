@@ -1,0 +1,19 @@
+<?php
+
+namespace {{ namespace }};
+
+/**
+ * Class {{ entityName }}
+ *
+ * @package {{ namespace }}
+ */
+class {{ entityName }} extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
+{
+    /**
+     * @inheritdoc
+     */
+    protected function _construct()
+    {
+        $this->_init('{{ tableName }}', '{{ primaryField }}');
+    }
+}

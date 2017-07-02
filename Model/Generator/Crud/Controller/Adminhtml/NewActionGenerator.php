@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\ClassBuilder;
+
 use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 
@@ -25,6 +25,7 @@ class NewActionGenerator extends AbstractAction
 {
     /**
      * @inheritdoc
+     * @throws \RuntimeException
      */
     protected function internalGenerate(
         ModuleNameEntity $moduleNameEntity,
@@ -32,52 +33,13 @@ class NewActionGenerator extends AbstractAction
     ): GeneratorResultInterface {
         $entityName = $additionalArguments['entityName'];
 
-        $classGenerator = new ClassBuilder(
-            $this->generateEntityName($moduleNameEntity, $entityName, 'NewAction')
-        );
-
-        /** @var \Magento\Framework\Code\Generator\ClassGenerator $generator */
-        $generator = $classGenerator
-            ->extendedFrom('\Magento\Backend\App\Action')
-            ->usesNamespace($this->generateNamespace($moduleNameEntity, $entityName))
-            ->startPropertyBuilding('resultForwardFactory')
-                ->markAsPrivate()
-            ->finishBuilding()
-            ->startMethodBuilding('__construct', $this->getConstructorBody())
-                ->markAsPublic()
-                ->startArgumentBuilding('context')
-                    ->type('\Magento\Backend\App\Action\Context')
-                ->finishBuilding()
-                ->startArgumentBuilding('resultForwardFactory')
-                    ->type('\Magento\Backend\Model\View\Result\ForwardFactory')
-                ->finishBuilding()
-            ->finishBuilding()
-            ->startMethodBuilding('execute', $this->getExecuteBody())
-                ->markAsPublic()
-            ->finishBuilding()
-            ->build();
-
         return new GeneratorResult(
-            $this->wrapToFile($generator)->generate(),
+            $this->codeTemplateEngine->render('crud/controller/adminhtml/new', [
+                    'namespace' => $this->generateNamespace($moduleNameEntity, $entityName)
+                ]
+            ),
             $this->generateFilePath($moduleNameEntity, $entityName, 'NewAction'),
             $this->generateEntityName($moduleNameEntity, $entityName, 'NewAction')
         );
-    }
-
-    private function getExecuteBody(): string
-    {
-        return '
-/** @var \Magento\Framework\Controller\Result\Forward $resultForward */
-$resultForward = $this->resultForwardFactory->create();
-return $resultForward->forward(\'edit\');
-        ';
-    }
-
-    private function getConstructorBody(): string
-    {
-        return '
-$this->resultForwardFactory = $resultForwardFactory;
-parent::__construct($context);
-        ';
     }
 }

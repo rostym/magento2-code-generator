@@ -84,8 +84,7 @@ abstract class AbstractXmlGenerator extends AbstractGenerator
     protected function getDiConfigFile(ModuleNameEntity $moduleNameEntity): string
     {
         return sprintf(
-            '%s%s/etc/di.xml',
-            $this->modulesDirProvider->getModulesDir(),
+            '%s/etc/di.xml',
             $moduleNameEntity->asPartOfPath()
         );
     }

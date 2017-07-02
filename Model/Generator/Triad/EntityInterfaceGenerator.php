@@ -12,13 +12,11 @@ declare(strict_types=1);
 namespace Krifollk\CodeGenerator\Model\Generator\Triad;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\Builder\InterfaceBuilder;
 use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
 use Krifollk\CodeGenerator\Model\Generator\NameUtil;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Krifollk\CodeGenerator\Model\TableDescriber\Result;
-use Zend\Code\Generator\FileGenerator;
 
 /**
  * Class ModelInterface
@@ -27,16 +25,18 @@ use Zend\Code\Generator\FileGenerator;
  */
 class EntityInterfaceGenerator extends AbstractGenerator
 {
-    const MODEL_INTERFACE_NAME_PATTERN      = '\%s\Api\Data\%sInterface';
-    const MODEL_INTERFACE_FILE_NAME_PATTERN = '%s/Api/Data/%sInterface.php';
-    const PACKAGE_NAME_PATTERN              = '%s\Api\Data';
+    /** @var \Krifollk\CodeGenerator\Model\CodeTemplate\Engine */
+    private $codeTemplateEngine;
 
-    /**#@+
-     * Doc block patterns
+    /**
+     * RepositoryGenerator constructor.
+     *
+     * @param \Krifollk\CodeGenerator\Model\CodeTemplate\Engine $codeTemplateEngine
      */
-    const GETTER_DOC_PATTERN = 'Get %s value.';
-    const SETTER_DOC_PATTERN = 'Set %s value.';
-    /**#@-*/
+    public function __construct(\Krifollk\CodeGenerator\Model\CodeTemplate\Engine $codeTemplateEngine)
+    {
+        $this->codeTemplateEngine = $codeTemplateEngine;
+    }
 
     /**
      * @inheritdoc
@@ -49,59 +49,55 @@ class EntityInterfaceGenerator extends AbstractGenerator
     /**
      * @inheritdoc
      * @throws \Zend\Code\Generator\Exception\InvalidArgumentException
+     * @throws \RuntimeException
      */
     protected function internalGenerate(
         ModuleNameEntity $moduleNameEntity,
         array $additionalArguments = []
-    ): GeneratorResultInterface
-    {
+    ): GeneratorResultInterface {
         $entityName = $additionalArguments['entityName'];
         /** @var Result $tableDescriberResult */
         $tableDescriberResult = $additionalArguments['tableDescriberResult'];
 
         $fullEntityName = sprintf(
-            self::MODEL_INTERFACE_NAME_PATTERN,
+            '\%s\Api\Data\%sInterface',
             $moduleNameEntity->asPartOfNamespace(),
             $entityName
         );
 
-        $interfaceBuilder = new InterfaceBuilder($fullEntityName);
-        $interfaceBuilder
-            ->startDocBlockBuilding()
-                ->disableWordWrap()
-                ->shortDescription(sprintf('Interface %s', $entityName))
-                ->addTag('package', sprintf(self::PACKAGE_NAME_PATTERN, $moduleNameEntity->asPartOfNamespace()))
-            ->finishBuilding();
-
+        $gettersSetters = '';
+        $constants = '';
+        $columnsCount = count($tableDescriberResult->columns());
+        $counter = 1;
         foreach ($tableDescriberResult->columns() as $column) {
             $camelizedColumnName = NameUtil::camelize($column->name());
-            $argumentName = lcfirst($camelizedColumnName);
-            $interfaceBuilder
-                ->addConstant(strtoupper($column->name()), $column->name())
-                ->startMethodBuilding(sprintf('get%s', $camelizedColumnName))
-                    ->startDocBlockBuilding()
-                        ->disableWordWrap()
-                        ->shortDescription(sprintf(self::GETTER_DOC_PATTERN, $argumentName))
-                        ->addTag('return', $column->type())
-                    ->finishBuilding()
-                ->finishBuilding()
-                ->startMethodBuilding(sprintf('set%s', $camelizedColumnName))
-                    ->addArgument($argumentName)
-                    ->startDocBlockBuilding()
-                        ->shortDescription(sprintf(self::SETTER_DOC_PATTERN, $argumentName))
-                        ->addTag('param', sprintf('%s $%s', $column->type(), $argumentName))
-                        ->addEmptyLine()
-                        ->addTag('return', '$this')
-                    ->finishBuilding()
-                ->finishBuilding();
+
+            $gettersSetters .= $this->codeTemplateEngine->render('entity/interface/getterSetter', [
+                    'name' => $camelizedColumnName,
+                    'type' => $column->type(),
+                ]
+            );
+
+            $constants .= sprintf('     const %s = \'%s\';', strtoupper($column->name()), $column->name());
+
+            if ($counter !== $columnsCount) {
+                $gettersSetters .= "\n\n";
+                $constants .= "\n";
+            }
+
+            $counter++;
         }
 
-        $fileGenerator = new FileGenerator();
-        $fileGenerator->setClass($interfaceBuilder->build());
-
         return new GeneratorResult(
-            $fileGenerator->generate(),
-            sprintf(self::MODEL_INTERFACE_FILE_NAME_PATTERN, $moduleNameEntity->asPartOfPath(), $entityName),
+            $this->codeTemplateEngine->render('entity/interface', [
+                    'namespace'      => sprintf('%s\Api\Data', $moduleNameEntity->asPartOfNamespace()),
+                    'constants'      => $constants,
+                    'entityName'     => $entityName,
+                    'gettersSetters' => $gettersSetters,
+
+                ]
+            ),
+            sprintf('%s/Api/Data/%sInterface.php', $moduleNameEntity->asPartOfPath(), $entityName),
             $fullEntityName
         );
     }

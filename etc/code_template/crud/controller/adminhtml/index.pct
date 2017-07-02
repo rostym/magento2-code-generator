@@ -1,0 +1,24 @@
+<?php
+
+namespace {{ namespace }};
+
+use Magento\Framework\Controller\ResultFactory;
+
+/**
+ * Class Index
+ *
+ * @method \Magento\Framework\App\Request\Http getRequest()
+ * @method \Magento\Framework\App\Response\Http getResponse()
+ *
+ * @package {{ namespace }}
+ */
+class Index extends \Magento\Backend\App\Action
+{
+    /**
+     * @inheritdoc
+     */
+    public function execute()
+    {
+        return $this->resultFactory->create(ResultFactory::TYPE_PAGE);
+    }
+}

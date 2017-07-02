@@ -10,7 +10,7 @@ namespace Krifollk\CodeGenerator\Test\Integration\Generator\Module;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
 use Krifollk\CodeGenerator\Model\Generator\Module\ModuleXml;
-use Magento\TestFramework\Helper\Bootstrap;
+
 
 /**
  * Class ModuleXmlTest

@@ -12,13 +12,11 @@ declare(strict_types=1);
 namespace Krifollk\CodeGenerator\Model\Generator\Triad;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\ClassBuilder;
 use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
 use Krifollk\CodeGenerator\Model\Generator\NameUtil;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Krifollk\CodeGenerator\Model\TableDescriber\Result;
-use Zend\Code\Generator\FileGenerator;
 
 /**
  * Class ResourcePart
@@ -27,13 +25,23 @@ use Zend\Code\Generator\FileGenerator;
  */
 class ResourceGenerator extends AbstractGenerator
 {
-    const RESOURCE_MODEL_PACKAGE_NAME_PATTERN = '\%s\Model\ResourceModel';
     const RESOURCE_MODEL_FILE_NAME_PATTERN    = '%s/Model/ResourceModel/%s.php';
 
+    /** @var \Krifollk\CodeGenerator\Model\CodeTemplate\Engine */
+    private $codeTemplateEngine;
+
     /**
-     * Return array of required arguments
+     * RepositoryGenerator constructor.
      *
-     * @return array
+     * @param \Krifollk\CodeGenerator\Model\CodeTemplate\Engine $codeTemplateEngine
+     */
+    public function __construct(\Krifollk\CodeGenerator\Model\CodeTemplate\Engine $codeTemplateEngine)
+    {
+        $this->codeTemplateEngine = $codeTemplateEngine;
+    }
+
+    /**
+     * @inheritdoc
      */
     protected function requiredArguments(): array
     {
@@ -44,6 +52,7 @@ class ResourceGenerator extends AbstractGenerator
      * @inheritdoc
      * @throws \Zend\Code\Generator\Exception\InvalidArgumentException
      * @throws \InvalidArgumentException
+     * @throws \RuntimeException
      */
     protected function internalGenerate(
         ModuleNameEntity $moduleNameEntity,
@@ -55,34 +64,23 @@ class ResourceGenerator extends AbstractGenerator
 
         $exposedMessagesContainer = [];
         $className = NameUtil::generateResourceName($moduleNameEntity, $entityName);
-        $classBuilder = new ClassBuilder($className);
-
-        $classBuilder
-            ->extendedFrom('\Magento\Framework\Model\ResourceModel\Db\AbstractDb')
-            ->startDocBlockBuilding()
-                ->shortDescription(sprintf('Class %s', $entityName))
-                ->addTag('package', sprintf(self::RESOURCE_MODEL_PACKAGE_NAME_PATTERN, $entityName))
-            ->finishBuilding()
-            ->startMethodBuilding('_construct')
-                ->markAsProtected()
-                ->withBody($this->generateConstructMethodBody($tableDescriberResult, $exposedMessagesContainer))
-                ->startDocBlockBuilding()
-                    ->addTag('inheritdoc', '')
-                ->finishBuilding()
-            ->finishBuilding();
-
-        $fileGenerator = new FileGenerator();
-        $fileGenerator->setClass($classBuilder->build());
 
         return new GeneratorResult(
-            $fileGenerator->generate(),
+            $this->codeTemplateEngine->render('entity/resource', [
+                    'namespace'    => sprintf('%s\Model\ResourceModel', $moduleNameEntity->asPartOfNamespace()),
+                    'tableName'    => $tableDescriberResult->tableName(),
+                    'primaryField' => $this->getPrimaryFieldName($tableDescriberResult, $exposedMessagesContainer),
+                    'entityName'   => $entityName
+
+                ]
+            ),
             sprintf(self::RESOURCE_MODEL_FILE_NAME_PATTERN, $moduleNameEntity->asPartOfPath(), $entityName),
             $className,
             $exposedMessagesContainer
         );
     }
 
-    private function generateConstructMethodBody(Result $tableDescriberResult, array &$exposedMessagesContainer): string
+    private function getPrimaryFieldName(Result $tableDescriberResult, array &$exposedMessagesContainer): string
     {
         $primaryFieldName = '';
 
@@ -92,6 +90,6 @@ class ResourceGenerator extends AbstractGenerator
             $exposedMessagesContainer[] = 'Primary column not found. Resource model will be generated with errors.';
         }
 
-        return sprintf("\$this->_init('%s', '%s');", $tableDescriberResult->tableName(), $primaryFieldName);
+        return $primaryFieldName;
     }
 }

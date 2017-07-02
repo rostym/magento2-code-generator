@@ -12,7 +12,8 @@ declare(strict_types=1);
 namespace Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\ClassBuilder;
+
+
 use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 
@@ -25,6 +26,7 @@ class IndexActionGenerator extends AbstractAction
 {
     /**
      * @inheritdoc
+     * @throws \RuntimeException
      */
     protected function internalGenerate(
         ModuleNameEntity $moduleNameEntity,
@@ -32,46 +34,13 @@ class IndexActionGenerator extends AbstractAction
     ): GeneratorResultInterface {
         $entityName = $additionalArguments['entityName'];
 
-        /** @var ClassBuilder $classGenerator */
-        $classGenerator = new ClassBuilder($this->generateEntityName($moduleNameEntity, $entityName, 'Index'));
-
-        /** @var \Magento\Framework\Code\Generator\ClassGenerator $generator */
-        $generator = $classGenerator
-            ->extendedFrom('\Magento\Backend\App\Action')
-            ->usesNamespace($this->generateNamespace($moduleNameEntity, $entityName))
-            ->startPropertyBuilding('resultPageFactory')
-                ->markAsPrivate()
-            ->finishBuilding()
-            ->startMethodBuilding('__construct', $this->getConstructorBody())
-                ->markAsPublic()
-                ->startArgumentBuilding('context')
-                    ->type('\Magento\Backend\App\Action\Context')
-                ->finishBuilding()
-                ->startArgumentBuilding('resultPageFactory')
-                    ->type('\Magento\Framework\View\Result\PageFactory')
-                ->finishBuilding()
-            ->finishBuilding()
-            ->startMethodBuilding('execute', $this->getExecuteBody())
-                ->markAsPublic()
-            ->finishBuilding()
-            ->build();
-
         return new GeneratorResult(
-            $this->wrapToFile($generator)->generate(),
+            $this->codeTemplateEngine->render('crud/controller/adminhtml/index', [
+                    'namespace' => $this->generateNamespace($moduleNameEntity, $entityName)
+                ]
+            ),
             $this->generateFilePath($moduleNameEntity, $entityName, 'Index'),
             $this->generateEntityName($moduleNameEntity, $entityName, 'Index')
         );
-    }
-
-    private function getConstructorBody(): string
-    {
-        return '$this->resultPageFactory = $resultPageFactory;'
-            . "\n"
-            . 'parent::__construct($context);';
-    }
-
-    private function getExecuteBody(): string
-    {
-        return 'return $this->resultPageFactory->create();';
     }
 }

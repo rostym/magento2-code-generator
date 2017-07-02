@@ -12,12 +12,10 @@ declare(strict_types=1);
 namespace Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent\Listing\Column;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\ClassBuilder;
 use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Krifollk\CodeGenerator\Model\TableDescriber\Result;
-use Zend\Code\Generator\FileGenerator;
 
 /**
  * Class EntityActions
@@ -26,7 +24,18 @@ use Zend\Code\Generator\FileGenerator;
  */
 class EntityActionsGenerator extends AbstractGenerator
 {
-    const NAMESPACE_PATTERN = '\%s\Model\UiComponent\Listing\Column';
+    /** @var \Krifollk\CodeGenerator\Model\CodeTemplate\Engine */
+    private $codeTemplateEngine;
+
+    /**
+     * CollectionGenerator constructor.
+     *
+     * @param \Krifollk\CodeGenerator\Model\CodeTemplate\Engine $codeTemplateEngine
+     */
+    public function __construct(\Krifollk\CodeGenerator\Model\CodeTemplate\Engine $codeTemplateEngine)
+    {
+        $this->codeTemplateEngine = $codeTemplateEngine;
+    }
 
     /**
      * @inheritdoc
@@ -38,6 +47,7 @@ class EntityActionsGenerator extends AbstractGenerator
 
     /**
      * @inheritdoc
+     * @throws \RuntimeException
      */
     protected function internalGenerate(
         ModuleNameEntity $moduleNameEntity,
@@ -47,115 +57,35 @@ class EntityActionsGenerator extends AbstractGenerator
         /** @var Result $tableDescriberResult */
         $tableDescriberResult = $additionalArguments['tableDescriberResult'];
 
-        $className = sprintf('\%s\Model\UiComponent\Listing\Column\%sActions', $moduleNameEntity->asPartOfNamespace(), $entityName);
+        $className = sprintf(
+            '\%s\Model\UiComponent\Listing\Column\%sActions',
+            $moduleNameEntity->asPartOfNamespace(),
+            $entityName
+        );
 
-        $classGenerator = new ClassBuilder($className);
         $deleteUrl = $this->getActionUrl($moduleNameEntity, $entityName, 'delete');
         $editUrl = $this->getActionUrl($moduleNameEntity, $entityName, 'edit');
 
-        /** @var \Magento\Framework\Code\Generator\ClassGenerator $generator */
-        $generator = $classGenerator
-            ->extendedFrom('\Magento\Ui\Component\Listing\Columns\Column')
-            ->startPropertyBuilding('urlBuilder')
-                ->markAsPrivate()
-            ->finishBuilding()
-            ->startMethodBuilding('__construct', $this->getConstructorBody())
-                ->markAsPublic()
-
-                ->startArgumentBuilding('context')
-                    ->type('\Magento\Framework\View\Element\UiComponent\ContextInterface')
-                ->finishBuilding()
-
-                ->startArgumentBuilding('uiComponentFactory')
-                    ->type('\Magento\Framework\View\Element\UiComponentFactory')
-                ->finishBuilding()
-
-                ->startArgumentBuilding('urlBuilder')
-                    ->type('\Magento\Framework\UrlInterface')
-                ->finishBuilding()
-
-                ->startArgumentBuilding('components')
-                    ->type('array')
-                    ->value([])
-                ->finishBuilding()
-
-                ->startArgumentBuilding('data')
-                    ->type('array')
-                    ->value([])
-                ->finishBuilding()
-
-            ->finishBuilding()
-            ->startMethodBuilding('prepareDataSource',
-                $this->getPrepareDataSourceBody($tableDescriberResult->primaryColumn()->name(), $editUrl, $deleteUrl)
-            )
-                ->markAsPublic()
-                ->startArgumentBuilding('dataSource')
-                    ->type('array')
-                ->finishBuilding()
-            ->finishBuilding()
-            ->build();
-
-        $fileGenerator = new FileGenerator();
-        $fileGenerator->setClass($generator);
-
         return new GeneratorResult(
-            $fileGenerator->generate(),
-            sprintf('%s/Model/UiComponent/Listing/Column/%sActions.php', $moduleNameEntity->asPartOfPath(), $entityName),
+            $this->codeTemplateEngine->render('crud/uiComponent\listing\column\actions', [
+                    'namespace'     => sprintf('%s\Model\UiComponent\Listing\Column', $moduleNameEntity->asPartOfNamespace()),
+                    'entityName'    => ucfirst($entityName),
+                    'idFieldName'   => $tableDescriberResult->primaryColumn()->name(),
+                    'editUrlPath'   => $editUrl,
+                    'deleteUrlPath' => $deleteUrl
+                ]
+            ),
+            sprintf(
+                '%s/Model/UiComponent/Listing/Column/%sActions.php',
+                $moduleNameEntity->asPartOfPath(),
+                $entityName
+            ),
             $className
         );
-    }
-
-    private function getConstructorBody(): string
-    {
-        return '
-$this->urlBuilder = $urlBuilder;
-parent::__construct($context, $uiComponentFactory, $components, $data);
-        ';
     }
 
     private function getActionUrl(ModuleNameEntity $moduleName, string $entityName, string $action): string
     {
         return sprintf('%s/%s/%s', mb_strtolower($moduleName->value()), mb_strtolower($entityName), $action);
-    }
-
-    private function getPrepareDataSourceBody(string $idFieldName, string $editUrlPath, string $deleteUrlPath): string
-    {
-        return "
-if (!isset(\$dataSource['data']['items'])) {
-    return \$dataSource;
-}
-
-foreach (\$dataSource['data']['items'] as &\$item) {
-    if (!isset(\$item['$idFieldName'])) { 
-        continue;
-    }
-    \$item[\$this->getData('name')] = [
-        'edit' => [
-            'href' => \$this->urlBuilder->getUrl(
-                '$editUrlPath',
-                [
-                    'id' => \$item['$idFieldName']
-                ]
-            ),
-            'label' => __('Edit')
-        ],
-        'delete' => [
-            'href' => \$this->urlBuilder->getUrl(
-                '$deleteUrlPath',
-                [
-                    'id' => \$item['$idFieldName']
-                ]
-            ),
-            'label' => __('Delete'),
-            'confirm' => [
-                'title' => __('Delete \"\${ $.\$data.title }\"'),
-                'message' => __('Are you sure you wan\\'t to delete a \"\${ $.\$data.title }\" record?')
-            ]
-        ]
-    ];
-}
-
-return \$dataSource;
-        ";
     }
 }

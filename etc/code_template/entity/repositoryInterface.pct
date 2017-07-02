@@ -1,0 +1,73 @@
+<?php
+
+namespace {{ namespace }};
+
+use Magento\Framework\Api\SearchCriteriaInterface;
+
+/**
+ * Interface {{ entityName }}RepositoryInterface
+ *
+ * @package {{ namespace }}
+ */
+interface {{ entityName }}RepositoryInterface
+{
+    /**
+     * Save {{ entityName }}
+     *
+     * @param {{ entityInterface }} ${{ entityNameVar }}
+     *
+     * @return {{ entityInterface }}
+     * @throws \Magento\Framework\Exception\CouldNotSaveException
+     */
+    public function save({{ entityInterface }} ${{ entityNameVar }});
+
+    /**
+     * Get {{ entityName }} by id.
+     *
+     * @param int ${{ entityNameVar }}Id
+     *
+     * @return {{ entityInterface }}
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function getById(${{ entityNameVar }}Id);
+
+    /**
+     * Find {{ entityName }} by id.
+     *
+     * @param int ${{ entityNameVar }}Id
+     *
+     * @return {{ entityInterface }}|null
+     */
+    public function findById(${{ entityNameVar }}Id);
+
+    /**
+     * Retrieve {{ entityName }} matching the specified criteria.
+     *
+     * @param SearchCriteriaInterface $searchCriteria
+     *
+     * @return {{ searchResultInterface }}
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function getList(SearchCriteriaInterface $searchCriteria);
+
+    /**
+     * Delete {{ entityName }}
+     *
+     * @param {{ entityInterface }} ${{ entityNameVar }}
+     *
+     * @return bool
+     * @throws \Magento\Framework\Exception\CouldNotDeleteException
+     */
+    public function delete({{ entityInterface }} ${{ entityNameVar }});
+
+    /**
+     * Delete {{ entityName }} by ID.
+     *
+     * @param int ${{ entityNameVar }}Id
+     *
+     * @return bool
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws \Magento\Framework\Exception\CouldNotDeleteException
+     */
+    public function deleteById(${{ entityNameVar }}Id);
+}

@@ -12,11 +12,9 @@ declare(strict_types=1);
 namespace Krifollk\CodeGenerator\Model\Generator\Crud\Model;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\ClassBuilder;
 use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
-use Zend\Code\Generator\FileGenerator;
 
 /**
  * Class DataProvider
@@ -28,6 +26,19 @@ class DataProviderGenerator extends AbstractGenerator
     const NAME_PATTERN      = '\%s\Model\%s\DataProvider';
     const FILE_NAME_PATTERN = '%s/Model/%s/DataProvider.php';
 
+    /** @var \Krifollk\CodeGenerator\Model\CodeTemplate\Engine */
+    private $codeTemplateEngine;
+
+    /**
+     * CollectionGenerator constructor.
+     *
+     * @param \Krifollk\CodeGenerator\Model\CodeTemplate\Engine $codeTemplateEngine
+     */
+    public function __construct(\Krifollk\CodeGenerator\Model\CodeTemplate\Engine $codeTemplateEngine)
+    {
+        $this->codeTemplateEngine = $codeTemplateEngine;
+    }
+
     /**
      * @inheritdoc
      */
@@ -38,6 +49,7 @@ class DataProviderGenerator extends AbstractGenerator
 
     /**
      * @inheritdoc
+     * @throws \RuntimeException
      */
     protected function internalGenerate(
         ModuleNameEntity $moduleNameEntity,
@@ -49,88 +61,15 @@ class DataProviderGenerator extends AbstractGenerator
 
         $className = sprintf('\%s\Model\%s\DataProvider', $moduleNameEntity->asPartOfNamespace(), $entityName);
 
-        $classBuilder = new ClassBuilder($className);
-
-        $classBuilder
-            ->extendedFrom('\Magento\Ui\DataProvider\AbstractDataProvider')
-            ->startPropertyBuilding('dataPersistor')
-                ->markAsPrivate()
-            ->finishBuilding()
-            ->startPropertyBuilding('loadedData')
-                ->markAsPrivate()
-                ->defaultValue([])
-            ->finishBuilding()
-            ->startMethodBuilding('__construct')
-                ->markAsPublic()
-                ->startArgumentBuilding('name')
-                ->finishBuilding()
-                ->startArgumentBuilding('primaryFieldName')
-                ->finishBuilding()
-                ->startArgumentBuilding('requestFieldName')
-                ->finishBuilding()
-                ->startArgumentBuilding('collectionFactory')
-                    ->type(sprintf('%sFactory', $collectionClassName))
-                ->finishBuilding()
-                ->startArgumentBuilding('dataPersistor')
-                    ->type('\Magento\Framework\App\Request\DataPersistorInterface')
-                ->finishBuilding()
-                ->startArgumentBuilding('meta')
-                    ->type('array')
-                    ->value([])
-                ->finishBuilding()
-                ->startArgumentBuilding('data')
-                    ->type('array')
-                    ->value([])
-                ->finishBuilding()
-                ->withBody($this->getConstructorBody())
-            ->finishBuilding()
-            ->startMethodBuilding('getData')
-                ->markAsPublic()
-                ->withBody($this->getGetDataBody($dataPersistorEntityKey))
-            ->finishBuilding();
-
-
-        $fileGenerator = new FileGenerator();
-        $fileGenerator->setClass($classBuilder->build());
-
         return new GeneratorResult(
-            $fileGenerator->generate(),
+            $this->codeTemplateEngine->render('crud/model/dataProvider', [
+                    'namespace'         => sprintf('%s\Model\%s', $moduleNameEntity->asPartOfNamespace(), $entityName),
+                    'dataPersistorKey'  => $dataPersistorEntityKey,
+                    'collectionFactory' => sprintf('%sFactory', $collectionClassName)
+                ]
+            ),
             sprintf('%s/Model/%s/DataProvider.php', $moduleNameEntity->asPartOfPath(), $entityName),
             $className
-        );
-    }
-
-    private function getConstructorBody():string
-    {
-        return '$this->collection = $collectionFactory->create();
-        $this->dataPersistor = $dataPersistor;
-        parent::__construct($name, $primaryFieldName, $requestFieldName, $meta, $data);';
-    }
-
-    private function getGetDataBody(string $dataPersistorEntityKey): string
-    {
-        return sprintf(
-            '
-if ($this->loadedData) {
-    return $this->loadedData;
-}
-$items = $this->collection->getItems();
-
-foreach ($items as $item) {
-    $this->loadedData[$item->getId()] = $item->getData();
-}
-
-$data = $this->dataPersistor->get(\'%1$s\');
-if (!empty($data)) {
-    $item = $this->collection->getNewEmptyItem();
-    $item->setData($data);
-    $this->loadedData[$item->getId()] = $item->getData();
-    $this->dataPersistor->clear(\'%1$s\');
-}
-
-return $this->loadedData;
-            ',
-            $dataPersistorEntityKey
         );
     }
 }

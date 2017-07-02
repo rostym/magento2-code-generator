@@ -16,6 +16,7 @@ use Krifollk\CodeGenerator\Model\Generator\AbstractXmlGenerator;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Krifollk\CodeGenerator\Model\NodeBuilder;
+use Magento\Framework\Api\SearchResults;
 
 /**
  * Class DiGenerator
@@ -31,7 +32,7 @@ class DiGenerator extends AbstractXmlGenerator
      */
     protected function requiredArguments(): array
     {
-        return ['entityClass', 'entityInterface', 'repository', 'repositoryInterface'];
+        return ['entityClass', 'entityInterface', 'repository', 'repositoryInterface', 'searchResultInterface'];
     }
 
     /**
@@ -46,9 +47,10 @@ class DiGenerator extends AbstractXmlGenerator
         $entityInterface = ltrim($additionalArguments['entityInterface'], '\\');
         $repository = ltrim($additionalArguments['repository'], '\\');
         $repositoryInterface = ltrim($additionalArguments['repositoryInterface'], '\\');
+        $searchResultInterface = ltrim($additionalArguments['searchResultInterface'], '\\');
         $exposedMessages = [];
 
-        $file = $this->getDiConfigFile($moduleNameEntity);
+        $file = $this->modulesDirProvider->getModulesDir() . $this->getDiConfigFile($moduleNameEntity);
 
         if ($this->file->isExists($file)) {
             $domDocument = $this->load($file);
@@ -64,6 +66,14 @@ class DiGenerator extends AbstractXmlGenerator
                 $nodeBuilder->elementNode('preference', ['for' => $repositoryInterface, 'type' => $repository]);
                 $exposedMessages[] = '';//TODO
             }
+
+            if (!$nodeBuilder->isExistByPath(sprintf(self::PREFERENCE_XPATH, $searchResultInterface))) {
+                $nodeBuilder->elementNode('preference', [
+                    'for'  => $searchResultInterface,
+                    'type' => SearchResults::class
+                ]);
+                $exposedMessages[] = '';//TODO
+            }
         } else {
             $nodeBuilder = new NodeBuilder('config', [
                 'xmlns:xsi'                     => 'http://www.w3.org/2001/XMLSchema-instance',
@@ -71,13 +81,14 @@ class DiGenerator extends AbstractXmlGenerator
             ]);
 
             $nodeBuilder
+                ->elementNode('preference', ['for' => $searchResultInterface, 'type' => SearchResults::class])
                 ->elementNode('preference', ['for' => $entityInterface, 'type' => $entityClass])
                 ->elementNode('preference', ['for' => $repositoryInterface, 'type' => $repository]);
         }
 
         return new GeneratorResult(
             $nodeBuilder->toXml(),
-            $file,
+            $this->getDiConfigFile($moduleNameEntity),
             'di',
             $exposedMessages
         );

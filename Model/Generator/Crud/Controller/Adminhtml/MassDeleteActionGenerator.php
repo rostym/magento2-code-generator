@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
+use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 
 /**
@@ -20,23 +20,37 @@ use Krifollk\CodeGenerator\Model\ModuleNameEntity;
  *
  * @package Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml
  */
-class MassDeleteActionGenerator extends AbstractGenerator
+class MassDeleteActionGenerator extends AbstractAction
 {
     /**
      * @inheritdoc
      */
     protected function requiredArguments(): array
     {
-        // TODO: Implement requiredArguments() method.
+        return array_merge(parent::requiredArguments(), ['entityRepository', 'entityCollection']);
     }
 
     /**
      * @inheritdoc
+     * @throws \RuntimeException
      */
     protected function internalGenerate(
         ModuleNameEntity $moduleNameEntity,
         array $additionalArguments = []
     ): GeneratorResultInterface {
-        // TODO: Implement internalGenerate() method.
+        $entityName = $additionalArguments['entityName'];
+        $entityRepository = $additionalArguments['entityRepository'];
+        $entityCollection = $additionalArguments['entityCollection'];
+
+        return new GeneratorResult(
+            $this->codeTemplateEngine->render('crud/controller/adminhtml/massDelete', [
+                    'namespace'        => $this->generateNamespace($moduleNameEntity, $entityName),
+                    'entityRepository' => $entityRepository,
+                    'entityCollection' => $entityCollection
+                ]
+            ),
+            $this->generateFilePath($moduleNameEntity, $entityName, 'MassDelete'),
+            $this->generateEntityName($moduleNameEntity, $entityName, 'MassDelete')
+        );
     }
 }

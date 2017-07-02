@@ -11,7 +11,7 @@ namespace Krifollk\CodeGenerator\Test\Integration\Generator\Triad;
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
 use Krifollk\CodeGenerator\Model\Generator\Triad\ResourceGenerator;
 use Krifollk\CodeGenerator\Model\TableInfo;
-use Magento\Framework\App\ResourceConnection;
+
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 

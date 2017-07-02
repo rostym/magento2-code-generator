@@ -12,11 +12,9 @@ declare(strict_types=1);
 namespace Krifollk\CodeGenerator\Model\Generator\Crud\Grid;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\ClassBuilder;
 use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
-use Zend\Code\Generator\FileGenerator;
 
 /**
  * Class Collection
@@ -25,6 +23,19 @@ use Zend\Code\Generator\FileGenerator;
  */
 class CollectionGenerator extends AbstractGenerator
 {
+    /** @var \Krifollk\CodeGenerator\Model\CodeTemplate\Engine */
+    private $codeTemplateEngine;
+
+    /**
+     * CollectionGenerator constructor.
+     *
+     * @param \Krifollk\CodeGenerator\Model\CodeTemplate\Engine $codeTemplateEngine
+     */
+    public function __construct(\Krifollk\CodeGenerator\Model\CodeTemplate\Engine $codeTemplateEngine)
+    {
+        $this->codeTemplateEngine = $codeTemplateEngine;
+    }
+
     /**
      * @inheritdoc
      */
@@ -35,6 +46,7 @@ class CollectionGenerator extends AbstractGenerator
 
     /**
      * @inheritdoc
+     * @throws \RuntimeException
      */
     protected function internalGenerate(
         ModuleNameEntity $moduleNameEntity,
@@ -47,15 +59,16 @@ class CollectionGenerator extends AbstractGenerator
             $moduleNameEntity->asPartOfNamespace(),
             $entityName
         );
-        $classBuilder = new ClassBuilder($className);
-        $classBuilder
-            ->extendedFrom('\Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult');
-
-        $fileGenerator = new FileGenerator();
-        $fileGenerator->setClass($classBuilder->build());
 
         return new GeneratorResult(
-            $fileGenerator->generate(),
+            $this->codeTemplateEngine->render('crud/grid/collection', [
+                    'namespace' => sprintf(
+                        '%s\Model\ResourceModel\%s\Grid',
+                        $moduleNameEntity->asPartOfNamespace(),
+                        $entityName
+                    ),
+                ]
+            ),
             sprintf('%s/Model/ResourceModel/%s/Grid/Collection.php', $moduleNameEntity->asPartOfPath(), $entityName),
             $className
         );

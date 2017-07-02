@@ -12,14 +12,12 @@ declare(strict_types=1);
 namespace Krifollk\CodeGenerator\Model\Generator\Triad;
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
-use Krifollk\CodeGenerator\Model\ClassBuilder;
+
 use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
 use Krifollk\CodeGenerator\Model\Generator\NameUtil;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Krifollk\CodeGenerator\Model\TableDescriber\Result;
-use Krifollk\CodeGenerator\Model\TableDescriber\Result\Column;
-use Zend\Code\Generator\FileGenerator;
 
 
 /**
@@ -32,6 +30,19 @@ class EntityGenerator extends AbstractGenerator
     const MODEL_NAME_PATTERN      = '\%s\Model\%s';
     const PACKAGE_NAME_PATTERN    = '%s\Model';
     const MODEL_FILE_NAME_PATTERN = '%s/Model/%s.php';
+
+    /** @var \Krifollk\CodeGenerator\Model\CodeTemplate\Engine */
+    private $codeTemplateEngine;
+
+    /**
+     * RepositoryGenerator constructor.
+     *
+     * @param \Krifollk\CodeGenerator\Model\CodeTemplate\Engine $codeTemplateEngine
+     */
+    public function __construct(\Krifollk\CodeGenerator\Model\CodeTemplate\Engine $codeTemplateEngine)
+    {
+        $this->codeTemplateEngine = $codeTemplateEngine;
+    }
 
     /**
      * @inheritdoc
@@ -51,6 +62,7 @@ class EntityGenerator extends AbstractGenerator
      * @inheritdoc
      * @throws \Zend\Code\Generator\Exception\InvalidArgumentException
      * @throws \InvalidArgumentException
+     * @throws \RuntimeException
      */
     protected function internalGenerate(
         ModuleNameEntity $moduleNameEntity,
@@ -69,64 +81,38 @@ class EntityGenerator extends AbstractGenerator
             $entityName
         );
 
-        $interfaceBuilder = new ClassBuilder($fullEntityName);
-        $interfaceBuilder
-            ->startDocBlockBuilding()
-                ->disableWordWrap()
-                ->shortDescription(sprintf('Class %s', $entityName))
-                ->addTag('method', sprintf('%s getResource()', $resourceEntityName))
-                ->addTag('method', sprintf('%s getCollection()', $entityCollectionName))
-                ->addTag('method', sprintf('%s getResourceCollection()', $entityCollectionName))
-                ->addEmptyLine()
-                ->addTag('package', sprintf(self::PACKAGE_NAME_PATTERN, $moduleNameEntity->asPartOfNamespace()))
-            ->finishBuilding()
-            ->extendedFrom('\Magento\Framework\Model\AbstractModel')
-            ->implementsInterface($entityInterface)
-            ->startPropertyBuilding('_eventPrefix')
-                ->markAsProtected()
-                ->defaultValue(mb_strtolower(sprintf('%s_model_%s', $moduleNameEntity->value(), $entityName)))
-            ->finishBuilding()
-            ->startMethodBuilding('_construct')
-                ->markAsProtected()
-                ->withBody(sprintf('$this->_init(%s::class);', $resourceEntityName))
-                ->startDocBlockBuilding()
-                    ->addTag('inheritdoc', '')
-                ->finishBuilding()
-            ->finishBuilding();
-
+        $gettersSetters = '';
+        $columnsCount = count($tableDescriberResult->columns());
+        $counter = 1;
         foreach ($tableDescriberResult->columns() as $column) {
-            $camelizedColumnName = NameUtil::camelize($column->name());
-            $argumentName = lcfirst($camelizedColumnName);
-            $interfaceBuilder
-                ->startMethodBuilding(sprintf('get%s', $camelizedColumnName))
-                    ->withBody(sprintf('return $this->_getData(self::%s);', strtoupper($column->name())))
-                    ->startDocBlockBuilding()
-                        ->addTag('inheritdoc', '')
-                    ->finishBuilding()
-                ->finishBuilding()
-                ->startMethodBuilding(sprintf('set%s', $camelizedColumnName))
-                    ->addArgument($argumentName)
-                    ->withBody($this->generateSetterBody($column, $argumentName))
-                    ->startDocBlockBuilding()
-                        ->addTag('inheritdoc', '')
-                    ->finishBuilding()
-                ->finishBuilding();
+            $camelizeColumnName = NameUtil::camelize($column->name());
+            $gettersSetters .= $this->codeTemplateEngine->render('entity/model/getterSetter', [
+                    'name'       => $camelizeColumnName,
+                    'constField' => strtoupper($column->name()),
+                ]
+            );
+
+            if ($counter !== $columnsCount) {
+                $gettersSetters .= "\n\n";
+            }
+
+            $counter++;
         }
 
-        $fileGenerator = new FileGenerator();
-        $fileGenerator->setClass($interfaceBuilder->build());
-
         return new GeneratorResult(
-            $fileGenerator->generate(),
+            $this->codeTemplateEngine->render('entity/model', [
+                    'namespace'       => sprintf(self::PACKAGE_NAME_PATTERN, $moduleNameEntity->asPartOfNamespace()),
+                    'resourceModel'   => $resourceEntityName,
+                    'eventPrefix'     => mb_strtolower(sprintf('%s_model_%s', $moduleNameEntity->value(), $entityName)),
+                    'entityName'      => $entityName,
+                    'collection'      => $entityCollectionName,
+                    'gettersSetters'  => $gettersSetters,
+                    'entityInterface' => $entityInterface
+
+                ]
+            ),
             sprintf(self::MODEL_FILE_NAME_PATTERN, $moduleNameEntity->asPartOfPath(), $entityName),
             $fullEntityName
         );
-    }
-
-    private function generateSetterBody(Column $column, string $argumentName): string
-    {
-        return sprintf('$this->setData(self::%s, $%s);
-        
-return $this;', strtoupper($column->name()), $argumentName);
     }
 }

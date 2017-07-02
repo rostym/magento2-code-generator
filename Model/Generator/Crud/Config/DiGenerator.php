@@ -19,6 +19,7 @@ use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Krifollk\CodeGenerator\Model\NodeBuilder;
 use Krifollk\CodeGenerator\Model\TableDescriber\Result;
+use Magento\Framework\Api\SearchResults;
 use Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory;
 
 /**
@@ -45,7 +46,8 @@ class DiGenerator extends AbstractXmlGenerator
             'entityClass',
             'entityInterface',
             'repository',
-            'repositoryInterface'
+            'repositoryInterface',
+            'searchResultInterface'
         ];
     }
 
@@ -62,14 +64,14 @@ class DiGenerator extends AbstractXmlGenerator
         $gridCollectionClass = ltrim($additionalArguments['gridCollectionClass'], '\\');
         /** @var Result $tableDescriberResult */
         $tableDescriberResult = $additionalArguments['tableDescriberResult'];
-
         $entityClass = ltrim($additionalArguments['entityClass'], '\\');
         $entityInterface = ltrim($additionalArguments['entityInterface'], '\\');
         $repository = ltrim($additionalArguments['repository'], '\\');
         $repositoryInterface = ltrim($additionalArguments['repositoryInterface'], '\\');
+        $searchResultInterface = ltrim($additionalArguments['searchResultInterface'], '\\');
 
         $dataSourceName = NameUtil::generateDataSourceName($moduleNameEntity, $entityName);
-        $diFile = $this->getDiConfigFile($moduleNameEntity);
+        $diFile = $this->modulesDirProvider->getModulesDir() . $this->getDiConfigFile($moduleNameEntity);
         if ($this->file->isExists($diFile)) {
             $domDocument = $this->load($diFile);
             $nodeBuilder = new NodeBuilder('', [], $domDocument);
@@ -97,6 +99,13 @@ class DiGenerator extends AbstractXmlGenerator
                 $nodeBuilder->elementNode('preference', ['for' => $repositoryInterface, 'type' => $repository]);
             }
 
+            if (!$nodeBuilder->isExistByPath(sprintf(TriadDiGenerator::PREFERENCE_XPATH, $searchResultInterface))) {
+                $nodeBuilder->elementNode('preference', [
+                    'for'  => $searchResultInterface,
+                    'type' => SearchResults::class
+                ]);
+            }
+
         } else {
             $nodeBuilder = new NodeBuilder('config', [
                 'xmlns:xsi'                     => 'http://www.w3.org/2001/XMLSchema-instance',
@@ -105,7 +114,8 @@ class DiGenerator extends AbstractXmlGenerator
 
             $nodeBuilder
                 ->elementNode('preference', ['for' => $entityInterface, 'type' => $entityClass])
-                ->elementNode('preference', ['for' => $repositoryInterface, 'type' => $repository]);
+                ->elementNode('preference', ['for' => $repositoryInterface, 'type' => $repository])
+                ->elementNode('preference', ['for' => $searchResultInterface, 'type' => SearchResults::class]);
             $this->addDataSourceCollectionsDefinition($nodeBuilder, $dataSourceName, $gridCollectionClass);
             $this->addCollectionDifinition($nodeBuilder, $gridCollectionClass, $tableDescriberResult, $resourceModelName);
         }

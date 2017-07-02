@@ -17,6 +17,8 @@ use Krifollk\CodeGenerator\Model\Generator\Crud\Config\DiGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml\DeleteActionGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml\EditActionGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml\IndexActionGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml\InlineEditActionGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml\MassDeleteActionGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml\NewActionGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml\SaveActionGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Crud\Grid\CollectionGenerator as GridCollectionGenerator;
@@ -35,6 +37,7 @@ use Krifollk\CodeGenerator\Model\Generator\Triad\EntityInterfaceGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Triad\Repository\RepositoryInterfaceGenerator;
 use Krifollk\CodeGenerator\Model\Generator\Triad\ResourceGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Triad\SearchResultInterfaceGenerator;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Krifollk\CodeGenerator\Model\TableDescriber;
@@ -91,6 +94,12 @@ class Crud extends Triad
     /** @var DeleteActionGenerator */
     private $deleteActionGenerator;
 
+    /** @var MassDeleteActionGenerator */
+    private $massDeleteActionGenerator;
+
+    /** @var InlineEditActionGenerator */
+    private $inlineEditActionGenerator;
+
     public function __construct(
         EntityGenerator $entityGenerator,
         EntityInterfaceGenerator $interfaceGenerator,
@@ -101,6 +110,7 @@ class Crud extends Triad
         CrudDiGenerator $crudDiGenerator,
         \Magento\Framework\Filesystem\Driver\File $file,
         ModulesDirProviderInterface $modulesDirProvider,
+        SearchResultInterfaceGenerator $searchResultInterfaceGenerator,
         TableDescriber $tableDescriber,
         EntityActionsGenerator $entityActionsGenerator,
         DataProviderGenerator $dataProviderGenerator,
@@ -116,7 +126,9 @@ class Crud extends Triad
         EditActionGenerator $editActionGenerator,
         NewActionGenerator $newActionGenerator,
         SaveActionGenerator $saveActionGenerator,
-        DeleteActionGenerator $deleteActionGenerator
+        DeleteActionGenerator $deleteActionGenerator,
+        MassDeleteActionGenerator $massDeleteActionGenerator,
+        InlineEditActionGenerator $inlineEditActionGenerator
     ) {
         parent::__construct(
             $entityGenerator,
@@ -128,7 +140,8 @@ class Crud extends Triad
             $crudDiGenerator,
             $file,
             $tableDescriber,
-            $modulesDirProvider
+            $modulesDirProvider,
+            $searchResultInterfaceGenerator
         );
         $this->entityActionsGenerator = $entityActionsGenerator;
         $this->dataProviderGenerator = $dataProviderGenerator;
@@ -145,8 +158,13 @@ class Crud extends Triad
         $this->newActionGenerator = $newActionGenerator;
         $this->saveActionGenerator = $saveActionGenerator;
         $this->deleteActionGenerator = $deleteActionGenerator;
+        $this->massDeleteActionGenerator = $massDeleteActionGenerator;
+        $this->inlineEditActionGenerator = $inlineEditActionGenerator;
     }
 
+    /**
+     * @inheritdoc
+     */
     protected function prepareEntities(
         ModuleNameEntity $moduleName,
         string $tableName,
@@ -198,45 +216,73 @@ class Crud extends Triad
             'entityName' => $entityName
         ]));
 
-        $resultContainer->insert('crud_controller_index', $this->indexActionGenerator->generate($moduleName, [
-            'entityName' => $entityName
-        ]));
+        $resultContainer->insert('crud_controller_index',
+            $this->indexActionGenerator->generate($moduleName, [
+                'entityName' => $entityName
+            ])
+        );
 
         $resultContainer->insert('crud_adminhtml_routes', $this->routesGenerator->generate($moduleName));
 
-        $resultContainer->insert('crud_di', $this->diGenerator->generate($moduleName, [
-            'entityName'           => $entityName,
-            'resourceModelName'    => $resultContainer->get('resource')->getEntityName(),
-            'gridCollectionClass'  => $resultContainer->get('crud_grid_collection')->getEntityName(),
-            'tableDescriberResult' => $tableDescriberResult,
-            'entityClass'          => $resultContainer->get('entity')->getEntityName(),
-            'entityInterface'      => $resultContainer->get('entity_interface')->getEntityName(),
-            'repository'           => $resultContainer->get('repository')->getEntityName(),
-            'repositoryInterface'  => $resultContainer->get('repository_interface')->getEntityName()
-        ]));
+        $resultContainer->insert('crud_di',
+            $this->diGenerator->generate($moduleName, [
+                'entityName'            => $entityName,
+                'resourceModelName'     => $resultContainer->get('resource')->getEntityName(),
+                'gridCollectionClass'   => $resultContainer->get('crud_grid_collection')->getEntityName(),
+                'tableDescriberResult'  => $tableDescriberResult,
+                'entityClass'           => $resultContainer->get('entity')->getEntityName(),
+                'entityInterface'       => $resultContainer->get('entity_interface')->getEntityName(),
+                'repository'            => $resultContainer->get('repository')->getEntityName(),
+                'repositoryInterface'   => $resultContainer->get('repository_interface')->getEntityName(),
+                'searchResultInterface' => $resultContainer->get('search_result_interface')->getEntityName()
+            ])
+        );
 
-        $resultContainer->insert('crud_controller_edit', $this->editActionGenerator->generate($moduleName, [
-            'entityName'       => $entityName,
-            'entityRepository' => $resultContainer->get('repository_interface')->getEntityName()
-        ]));
+        $resultContainer->insert('crud_controller_edit',
+            $this->editActionGenerator->generate($moduleName, [
+                'entityName'       => $entityName,
+                'entityRepository' => $resultContainer->get('repository_interface')->getEntityName()
+            ])
+        );
 
+        $resultContainer->insert('crud_controller_new',
+            $this->newActionGenerator->generate($moduleName, [
+                'entityName' => $entityName
+            ])
+        );
 
-        $resultContainer->insert('crud_controller_new', $this->newActionGenerator->generate($moduleName, [
-            'entityName' => $entityName
-        ]));
+        $resultContainer->insert('crud_controller_save',
+            $this->saveActionGenerator->generate($moduleName, [
+                'entityName'             => $entityName,
+                'entityRepository'       => $resultContainer->get('repository_interface')->getEntityName(),
+                'entity'                 => $resultContainer->get('entity_interface')->getEntityName(),
+                'dataPersistorEntityKey' => $dataPersistorEntityKey,
+                'entityInterface'        => $resultContainer->get('entity_interface')->getEntityName()
+            ])
+        );
 
-        $resultContainer->insert('crud_controller_save', $this->saveActionGenerator->generate($moduleName, [
-            'entityName'             => $entityName,
-            'entityRepository'       => $resultContainer->get('repository_interface')->getEntityName(),
-            'entity'                 => $resultContainer->get('entity_interface')->getEntityName(),
-            'dataPersistorEntityKey' => $dataPersistorEntityKey
-        ]));
+        $resultContainer->insert('crud_controller_delete',
+            $this->deleteActionGenerator->generate($moduleName, [
+                'entityName'                => $entityName,
+                'entityRepositoryInterface' => $resultContainer->get('repository_interface')->getEntityName()
+            ])
+        );
 
-        $resultContainer->insert('crud_controller_delete', $this->deleteActionGenerator->generate($moduleName, [
-            'entityName'       => $entityName,
-            'entityRepositoryInterface' => $resultContainer->get('repository_interface')->getEntityName()
-        ]));
+        $resultContainer->insert('crud_controller_massDeleteAction',
+            $this->massDeleteActionGenerator->generate($moduleName, [
+                'entityName'       => $entityName,
+                'entityRepository' => $resultContainer->get('repository_interface')->getEntityName(),
+                'entityCollection' => $resultContainer->get('collection')->getEntityName()
+            ])
+        );
 
+        $resultContainer->insert('crud_controller_inlineEdit',
+            $this->inlineEditActionGenerator->generate($moduleName, [
+                'entityName'       => $entityName,
+                'entityRepository' => $resultContainer->get('repository_interface')->getEntityName(),
+                'entityInterface'  => $resultContainer->get('entity_interface')->getEntityName()
+            ])
+        );
 
         return $resultContainer;
     }

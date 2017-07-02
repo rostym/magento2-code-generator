@@ -1,0 +1,29 @@
+<?php
+
+namespace {{ namespace }};
+
+use Magento\Framework\Api\SearchResultsInterface;
+
+/**
+ * Interface {{ entityName }}SearchResultsInterface
+ *
+ * @package {{ namespace }}
+ */
+interface {{ entityName }}SearchResultsInterface extends SearchResultsInterface
+{
+    /**
+     * Get {{ entityName }} list.
+     *
+     * @return {{ entityInterface }}[]
+     */
+    public function getItems();
+
+    /**
+     * Set {{ entityName }} list.
+     *
+     * @param {{ entityInterface }}[] $items
+     *
+     * @return $this
+     */
+    public function setItems(array $items);
+}

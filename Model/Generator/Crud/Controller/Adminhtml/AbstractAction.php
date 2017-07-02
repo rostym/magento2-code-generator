@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Krifollk\CodeGenerator\Model\Generator\Crud\Controller\Adminhtml;
 
+use Krifollk\CodeGenerator\Model\CodeTemplate\Engine;
 use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Zend\Code\Generator\FileGenerator;
@@ -22,6 +23,19 @@ use Zend\Code\Generator\FileGenerator;
  */
 abstract class AbstractAction extends AbstractGenerator
 {
+    /** @var Engine */
+    protected $codeTemplateEngine;
+
+    /**
+     * IndexActionGenerator constructor.
+     *
+     * @param Engine $codeTemplateEngine
+     */
+    public function __construct(Engine $codeTemplateEngine)
+    {
+        $this->codeTemplateEngine = $codeTemplateEngine;
+    }
+
     protected function requiredArguments(): array
     {
         return ['entityName'];
@@ -63,6 +77,6 @@ abstract class AbstractAction extends AbstractGenerator
 
     protected function generateNamespace(ModuleNameEntity $moduleNameEntity, string $entityName): string
     {
-        return sprintf('\%s\Controller\Adminhtml\%s', $moduleNameEntity->asPartOfNamespace(), $entityName);
+        return sprintf('%s\Controller\Adminhtml\%s', $moduleNameEntity->asPartOfNamespace(), $entityName);
     }
 }
