@@ -96,12 +96,13 @@ class Module extends AbstractCommand
      *
      * @param ModuleNameEntity $moduleNameEntity
      * @param string           $version
+     * @param string           $dir
      *
      * @return \Generator
-     * @throws \InvalidArgumentException
      * @throws \Magento\Framework\Exception\FileSystemException
+     * @throws \InvalidArgumentException
      */
-    public function generate(ModuleNameEntity $moduleNameEntity, $version = ''): \Generator
+    public function generate(ModuleNameEntity $moduleNameEntity, $version = '', string $dir = ''): \Generator
     {
         $container = $this->createResultContainer();
 
@@ -141,6 +142,6 @@ class Module extends AbstractCommand
             $this->upgradeSchemaGenerator->generate($moduleNameEntity)
         );
 
-        return $this->generateFiles($container);
+        return $this->generateFiles($container, $moduleNameEntity, $dir);
     }
 }

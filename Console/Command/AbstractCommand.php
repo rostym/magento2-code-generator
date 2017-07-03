@@ -13,6 +13,8 @@ namespace Krifollk\CodeGenerator\Console\Command;
 
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 
 /**
  * Class AbstractCommand
@@ -21,6 +23,8 @@ use Symfony\Component\Console\Command\Command;
  */
 abstract class AbstractCommand extends Command
 {
+    const DIR_OPTION = 'dir';
+
     /**
      * Create module name entity
      *
@@ -32,5 +36,33 @@ abstract class AbstractCommand extends Command
     protected function createModuleNameEntity($moduleName): ModuleNameEntity
     {
         return new ModuleNameEntity($moduleName);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function configure()
+    {
+        $this->addOption(
+            self::DIR_OPTION,
+            null,
+            InputOption::VALUE_OPTIONAL,
+            'Module directory. Ex: app/module-some-module',
+            ''
+        );
+
+        parent::configure();
+    }
+
+    /**
+     * Get Directory option
+     *
+     * @param InputInterface $input
+     *
+     * @return string
+     */
+    protected function getDirOption(InputInterface $input): string
+    {
+        return trim($input->getOption(self::DIR_OPTION), " \t\n\r \v/\\");
     }
 }

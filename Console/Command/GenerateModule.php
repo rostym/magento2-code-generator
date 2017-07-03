@@ -68,10 +68,10 @@ class GenerateModule extends AbstractCommand
     {
         $moduleName = $this->createModuleNameEntity($input->getArgument(self::MODULE_NAME_ARGUMENT));
         $moduleVersion = $input->getArgument(self::MODULE_VERSION);
+        $dir = $this->getDirOption($input);
 
         try {
-            $generatedFiles = $this->moduleGenerator->generate($moduleName, $moduleVersion);
-
+            $generatedFiles = $this->moduleGenerator->generate($moduleName, $moduleVersion, $dir);
             foreach ($generatedFiles as $generatedFile) {
                 $output->writeln(sprintf('<info>File %s was generated.</info>', $generatedFile));
             }

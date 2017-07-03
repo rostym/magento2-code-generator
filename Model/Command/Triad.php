@@ -90,6 +90,7 @@ class Triad extends AbstractCommand
      * @param ModuleNameEntity $moduleName
      * @param string           $tableName
      * @param string           $entityName
+     * @param string           $dir
      *
      * @return \Generator
      * @throws \Magento\Framework\Exception\FileSystemException
@@ -97,12 +98,12 @@ class Triad extends AbstractCommand
      * @throws \Zend\Code\Generator\Exception\InvalidArgumentException
      * @throws \InvalidArgumentException
      */
-    public function generate(ModuleNameEntity $moduleName, string $tableName, string $entityName)
+    public function generate(ModuleNameEntity $moduleName, string $tableName, string $entityName, string $dir)
     {
         /** @var GeneratorResult[] $entities */
         $entities = $this->prepareEntities($moduleName, $tableName, $entityName);
 
-        return $this->generateFiles($entities);
+        return $this->generateFiles($entities, $moduleName, $dir);
     }
 
     /**

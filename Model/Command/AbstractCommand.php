@@ -13,6 +13,7 @@ namespace Krifollk\CodeGenerator\Model\Command;
 
 use Krifollk\CodeGenerator\Api\ModulesDirProviderInterface;
 use Krifollk\CodeGenerator\Model\GeneratorResult\Container;
+use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Magento\Framework\Filesystem\Driver\File;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
 
@@ -44,16 +45,22 @@ class AbstractCommand
     /**
      * Generate files
      *
-     * @param Container $container
+     * @param Container        $container
+     * @param ModuleNameEntity $moduleNameEntity
+     * @param string           $dir
      *
      * @return \Generator
      * @throws \Magento\Framework\Exception\FileSystemException
      */
-    protected function generateFiles(Container $container)
-    {
+    protected function generateFiles(
+        Container $container,
+        ModuleNameEntity $moduleNameEntity,
+        string $dir
+    ) {
         /** @var GeneratorResult $entity */
         foreach ($container->getAll() as $entity) {
-            $absoluteFilePath = $this->getModulesDir() . $entity->getDestinationFile();
+            $absoluteFilePath = $this->getAbsoluteFilePath($moduleNameEntity, $dir, $entity);
+
             $absoluteDir = dirname($absoluteFilePath);
             $this->file->createDirectory($absoluteDir);
             $this->file->filePutContents($absoluteFilePath, $entity->getContent());
@@ -73,5 +80,21 @@ class AbstractCommand
     private function getModulesDir(): string
     {
         return $this->modulesDirProvider->getModulesDir();
+    }
+
+    private function getAbsoluteFilePath(
+        ModuleNameEntity $moduleNameEntity,
+        string $dir,
+        GeneratorResult $entity
+    ): string {
+        $absoluteFilePath = $this->getModulesDir() . $entity->getDestinationFile();
+
+        if ($dir !== '') {
+            $absoluteFilePath = sprintf('%s/%s%s', BP, $dir,
+                str_replace($moduleNameEntity->asPartOfPath(), '', $entity->getDestinationFile())
+            );
+        }
+
+        return $absoluteFilePath;
     }
 }

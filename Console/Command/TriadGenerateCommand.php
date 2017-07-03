@@ -64,6 +64,7 @@ class TriadGenerateCommand extends AbstractCommand
             ->addArgument(self::MODULE_NAME_ARGUMENT, InputArgument::REQUIRED, 'Module name')
             ->addArgument(self::ENTITY_NAME_ARGUMENT, InputArgument::REQUIRED, 'Entity name')
             ->addArgument(self::TABLE_NAME_ARGUMENT, InputArgument::REQUIRED, 'Table name');
+        parent::configure();
     }
 
     /**
@@ -80,9 +81,10 @@ class TriadGenerateCommand extends AbstractCommand
         $moduleName = $this->createModuleNameEntity($input->getArgument(self::MODULE_NAME_ARGUMENT));
         $tableName = $input->getArgument(self::TABLE_NAME_ARGUMENT);
         $entityName = ucfirst($input->getArgument(self::ENTITY_NAME_ARGUMENT));
+        $dir = $this->getDirOption($input);
 
         try {
-            $generatedFiles = $this->triad->generate($moduleName, $tableName, $entityName);
+            $generatedFiles = $this->triad->generate($moduleName, $tableName, $entityName, $dir);
 
             foreach ($generatedFiles as $generatedFile) {
                 $output->writeln(sprintf('<info>File %s was generated.</info>', $generatedFile));
