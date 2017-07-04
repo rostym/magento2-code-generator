@@ -13,6 +13,7 @@ namespace Krifollk\CodeGenerator\Model\Generator\Crud\UiComponent\Listing\Column
 
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
 use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
+use Krifollk\CodeGenerator\Model\Generator\NameUtil;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Krifollk\CodeGenerator\Model\TableDescriber\Result;
@@ -67,7 +68,7 @@ class EntityActionsGenerator extends AbstractGenerator
         $editUrl = $this->getActionUrl($moduleNameEntity, $entityName, 'edit');
 
         return new GeneratorResult(
-            $this->codeTemplateEngine->render('crud/uiComponent\listing\column\actions', [
+            $this->codeTemplateEngine->render('crud/uiComponent/listing/column/actions', [
                     'namespace'     => sprintf('%s\Model\UiComponent\Listing\Column', $moduleNameEntity->asPartOfNamespace()),
                     'entityName'    => ucfirst($entityName),
                     'idFieldName'   => $tableDescriberResult->primaryColumn()->name(),
@@ -86,6 +87,6 @@ class EntityActionsGenerator extends AbstractGenerator
 
     private function getActionUrl(ModuleNameEntity $moduleName, string $entityName, string $action): string
     {
-        return sprintf('%s/%s/%s', mb_strtolower($moduleName->value()), mb_strtolower($entityName), $action);
+        return sprintf('%s/%s/%s', NameUtil::generateModuleFrontName($moduleName), mb_strtolower($entityName), $action);
     }
 }
