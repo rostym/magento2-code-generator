@@ -1,0 +1,4 @@
+    public function before{{ methodName }}({{ subject }} $subject{{ arguments }})
+    {
+        //TODO
+    }

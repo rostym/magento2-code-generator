@@ -1,0 +1,13 @@
+<?php
+
+namespace {{ namespace }};
+
+/**
+ * Class {{ className }}
+ *
+ * @package {{ namespace }}
+ */
+class {{ className }}
+{
+    {{ interceptors }}
+}

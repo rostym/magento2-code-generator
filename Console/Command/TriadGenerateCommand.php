@@ -59,12 +59,10 @@ class TriadGenerateCommand extends AbstractCommand
      */
     protected function configure()
     {
-        $this
-            ->setDescription('Generate Model, Resource, Collection and also Repository, by db table.')
-            ->addArgument(self::MODULE_NAME_ARGUMENT, InputArgument::REQUIRED, 'Module name')
+        parent::configure();
+        $this->setDescription('Generate Model, Resource, Collection and also Repository, by db table.')
             ->addArgument(self::ENTITY_NAME_ARGUMENT, InputArgument::REQUIRED, 'Entity name')
             ->addArgument(self::TABLE_NAME_ARGUMENT, InputArgument::REQUIRED, 'Table name');
-        parent::configure();
     }
 
     /**

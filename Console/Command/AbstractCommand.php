@@ -13,6 +13,7 @@ namespace Krifollk\CodeGenerator\Console\Command;
 
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 
@@ -24,6 +25,7 @@ use Symfony\Component\Console\Input\InputOption;
 abstract class AbstractCommand extends Command
 {
     const DIR_OPTION = 'dir';
+    const MODULE_NAME_ARGUMENT = 'module_name';
 
     /**
      * Create module name entity
@@ -50,6 +52,8 @@ abstract class AbstractCommand extends Command
             'Module directory. Ex: app/module-some-module',
             ''
         );
+
+        $this->addArgument(self::MODULE_NAME_ARGUMENT, InputArgument::REQUIRED, 'Module name');
 
         parent::configure();
     }

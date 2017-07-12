@@ -1,0 +1,4 @@
+    public function after{{ methodName }}({{ subject }} $subject, $result{{ arguments }})
+    {
+        //TODO
+    }

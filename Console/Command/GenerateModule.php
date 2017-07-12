@@ -28,8 +28,7 @@ class GenerateModule extends AbstractCommand
     /**#@+
      * Arguments
      */
-    const MODULE_NAME_ARGUMENT = 'module_name';
-    const MODULE_VERSION       = 'module_version';
+    const MODULE_VERSION = 'module_version';
     /**#@-*/
 
     /** @var Module */
@@ -53,12 +52,9 @@ class GenerateModule extends AbstractCommand
      */
     protected function configure()
     {
-        $this
-            ->setDescription('Generate base module files.')
-            ->addArgument(self::MODULE_NAME_ARGUMENT, InputArgument::REQUIRED, 'Module name')
-            ->addArgument(self::MODULE_VERSION, InputArgument::OPTIONAL, 'Module version');
-
         parent::configure();
+        $this->setDescription('Generate base module files.')
+            ->addArgument(self::MODULE_VERSION, InputArgument::OPTIONAL, 'Module version');
     }
 
     /**
