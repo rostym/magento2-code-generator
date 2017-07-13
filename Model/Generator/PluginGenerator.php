@@ -65,7 +65,8 @@ class PluginGenerator extends AbstractGenerator
 
         $pluginFullClassName = $this->generatePluginFullClassName(
             $moduleNameEntity,
-            $pluginClass, $interceptedClassName
+            $pluginClass,
+            $interceptedClassName
         );
 
         $interceptors = '';
@@ -79,17 +80,19 @@ class PluginGenerator extends AbstractGenerator
             foreach ($methodParameters as $parameter) {
                 if ($parameter->getType() === null) {
                     $parameters .= sprintf(
-                        ', $%s',
-                        $parameter->getName()
+                        ', $%s%s',
+                        $parameter->getName(),
+                        $this->prepareDefaultParameterValue($parameter, $interceptedClassName)
                     );
                     continue;
                 }
 
                 $parameters .= sprintf(
-                    ', %s%s $%s',
+                    ', %s%s $%s%s',
                     $parameter->getType()->isBuiltin() ? '' : '\\',//Add back slash to class
                     $parameter->getType(),
-                    $parameter->getName()
+                    $parameter->getName(),
+                    $this->prepareDefaultParameterValue($parameter, $interceptedClassName)
 
                 );
             }
@@ -174,5 +177,25 @@ class PluginGenerator extends AbstractGenerator
         ]);
 
         return $content;
+    }
+
+    private function prepareDefaultParameterValue(\ReflectionParameter $parameter, string $interceptedClass): string
+    {
+        $value = '';
+        if (!$parameter->isDefaultValueAvailable()) {
+            return $value;
+        }
+
+        $pattern = ' = %s';
+        if ($parameter->isDefaultValueConstant()) {
+            if (strpos($parameter->getDefaultValueConstantName(), 'self::') !== false) {
+                return sprintf($pattern,
+                    str_replace('self::', $interceptedClass . '::', $parameter->getDefaultValueConstantName()));
+            }
+
+            return sprintf($pattern, '\\' . $parameter->getDefaultValueConstantName());
+        }
+
+        return sprintf($pattern, var_export($parameter->getDefaultValue(), true));
     }
 }
