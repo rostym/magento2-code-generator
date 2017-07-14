@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Krifollk\CodeGenerator\Console\Command;
 
 use Krifollk\CodeGenerator\Model\Command\Plugin;
+use Krifollk\CodeGenerator\Model\Generator\PluginGenerator;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -88,6 +89,14 @@ class GeneratePlugin extends AbstractCommand
             return;
         }
 
+        $question = new Question(sprintf(
+            'Enter the name of the plugin class (<info>\Module\Name\ part not required</info>) Default: <info>%s</info>:',
+            PluginGenerator::generateDefaultPluginName($moduleNameEntity, $className)),
+            ''
+        );
+
+        $destinationClassName = $helper->ask($input, $output, $question);
+
         $table = new Table($output);
         $table->setHeaders(['#id', 'Allowed methods']);
 
@@ -98,6 +107,16 @@ class GeneratePlugin extends AbstractCommand
         }
 
         $table->render();
+
+        if ($destinationClassName !== '') {
+            $output->writeln(
+                sprintf(
+                    'Plugin Name is: <info>%s</info>',
+                    sprintf('%s\%s', $moduleNameEntity->asPartOfNamespace(), $destinationClassName)
+                )
+            );
+        }
+
         $methods = [];
         while (true) {
             $question = new Question(
@@ -136,7 +155,13 @@ class GeneratePlugin extends AbstractCommand
         }
 
         try {
-            $generatedFiles = $this->plugin->generate($moduleNameEntity, $methods, $className, '', $dir);
+            $generatedFiles = $this->plugin->generate(
+                $moduleNameEntity,
+                $methods,
+                $className,
+                $destinationClassName,
+                $dir
+            );
             foreach ($generatedFiles as $generatedFile) {
                 $output->writeln(sprintf('<info>File %s has been generated.</info>', $generatedFile));
             }

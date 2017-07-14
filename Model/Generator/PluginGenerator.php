@@ -23,6 +23,8 @@ use Krifollk\CodeGenerator\Model\ModuleNameEntity;
  */
 class PluginGenerator extends AbstractGenerator
 {
+    const DEFAULT_CLASS_NAME_PATTERN = '\%s\Plugin\%s';
+
     /** @var \Krifollk\CodeGenerator\Model\MethodInjector */
     private $methodInjector;
 
@@ -39,6 +41,23 @@ class PluginGenerator extends AbstractGenerator
     {
         $this->methodInjector = $methodInjector;
         $this->codeTemplateEngine = $codeTemplateEngine;
+    }
+
+    /**
+     * @param \Krifollk\CodeGenerator\Model\ModuleNameEntity $moduleNameEntity
+     * @param string                                         $interceptedClassName
+     *
+     * @return string
+     */
+    public static function generateDefaultPluginName(
+        ModuleNameEntity $moduleNameEntity,
+        string $interceptedClassName
+    ): string {
+        return sprintf(
+            self::DEFAULT_CLASS_NAME_PATTERN,
+            $moduleNameEntity->asPartOfNamespace(),
+            trim($interceptedClassName, '\\')
+        );
     }
 
     /**
@@ -127,7 +146,7 @@ class PluginGenerator extends AbstractGenerator
 
         $explodedClassName = explode('\\', $pluginFullClassName);
         $shortClassName = array_pop($explodedClassName);
-        $namespace = trim(str_replace($shortClassName, '', $pluginFullClassName), '\\');
+        $namespace = trim(implode('\\', $explodedClassName), '\\');
 
         $content = $this->generatePluginContent($namespace, $shortClassName, $interceptors, $pluginFullClassName);
 
@@ -146,7 +165,7 @@ class PluginGenerator extends AbstractGenerator
         string $interceptedClassName
     ): string {
         if ($pluginClass === '') {
-            return sprintf('\%s\Plugin\%s', $moduleNameEntity->asPartOfNamespace(), trim($interceptedClassName, '\\'));
+            return self::generateDefaultPluginName($moduleNameEntity, $interceptedClassName);
         }
 
         return sprintf('\%s\%s', $moduleNameEntity->asPartOfNamespace(), $pluginClass);
