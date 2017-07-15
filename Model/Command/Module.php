@@ -1,110 +1,147 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
- * (c) 2016. Rostyslav Tymoshenko <krifollk@gmail.com>
+ * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
 namespace Krifollk\CodeGenerator\Model\Command;
 
-use Krifollk\CodeGenerator\Model\Generator\Module\ModuleXmlFactory;
-use Krifollk\CodeGenerator\Model\Generator\Module\RegistrationFactory;
-use Krifollk\CodeGenerator\Model\GeneratorResult;
-use Magento\Framework\Filesystem\DriverInterface;
+use Krifollk\CodeGenerator\Api\ModulesDirProviderInterface;
+use Krifollk\CodeGenerator\Model\Generator\Module\ComposerJsonGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Module\InstallDataGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Module\InstallSchemaGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Module\ModuleXml;
+use Krifollk\CodeGenerator\Model\Generator\Module\Registration;
+use Krifollk\CodeGenerator\Model\Generator\Module\UninstallGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Module\UpgradeDataGenerator;
+use Krifollk\CodeGenerator\Model\Generator\Module\UpgradeSchemaGenerator;
+use Krifollk\CodeGenerator\Model\ModuleNameEntity;
+use Magento\Framework\Filesystem\Driver\File;
 
 /**
  * Class Module
  *
  * @package Krifollk\CodeGenerator\Model\Command
  */
-class Module
+class Module extends AbstractCommand
 {
-    /**
-     * @var RegistrationFactory
-     */
-    private $registrationFactory;
+    /** @var Registration */
+    private $registration;
 
-    /**
-     * @var ModuleXmlFactory
-     */
-    private $moduleXmlFactory;
+    /** @var ModuleXml */
+    private $moduleXml;
 
-    /**
-     * @var \Magento\Framework\Filesystem\Driver\File
-     */
-    private $file;
+    /** @var ComposerJsonGenerator */
+    private $composerJsonGenerator;
+
+    /** @var InstallDataGenerator */
+    private $installDataGenerator;
+
+    /** @var InstallSchemaGenerator */
+    private $installSchemaGenerator;
+
+    /** @var UninstallGenerator */
+    private $uninstallGenerator;
+
+    /** @var UpgradeDataGenerator */
+    private $upgradeDataGenerator;
+
+    /** @var UpgradeSchemaGenerator */
+    private $upgradeSchemaGenerator;
 
     /**
      * Module constructor.
      *
-     * @param RegistrationFactory                       $registrationFactory
-     * @param ModuleXmlFactory                          $moduleXmlFactory
-     * @param \Magento\Framework\Filesystem\Driver\File $file
+     * @param Registration                $registration
+     * @param ModuleXml                   $moduleXml
+     * @param File                        $file
+     * @param ModulesDirProviderInterface $modulesDirProvider
+     * @param ComposerJsonGenerator       $composerJsonGenerator
+     * @param InstallDataGenerator        $installDataGenerator
+     * @param InstallSchemaGenerator      $installSchemaGenerator
+     * @param UninstallGenerator          $uninstallGenerator
+     * @param UpgradeDataGenerator        $upgradeDataGenerator
+     * @param UpgradeSchemaGenerator      $upgradeSchemaGenerator
      */
     public function __construct(
-        RegistrationFactory $registrationFactory,
-        ModuleXmlFactory $moduleXmlFactory,
-        \Magento\Framework\Filesystem\Driver\File $file
+        Registration $registration,
+        ModuleXml $moduleXml,
+        File $file,
+        ModulesDirProviderInterface $modulesDirProvider,
+        ComposerJsonGenerator $composerJsonGenerator,
+        InstallDataGenerator $installDataGenerator,
+        InstallSchemaGenerator $installSchemaGenerator,
+        UninstallGenerator $uninstallGenerator,
+        UpgradeDataGenerator $upgradeDataGenerator,
+        UpgradeSchemaGenerator $upgradeSchemaGenerator
     ) {
-        $this->registrationFactory = $registrationFactory;
-        $this->moduleXmlFactory = $moduleXmlFactory;
-        $this->file = $file;
+        $this->registration = $registration;
+        $this->moduleXml = $moduleXml;
+        $this->composerJsonGenerator = $composerJsonGenerator;
+        $this->installDataGenerator = $installDataGenerator;
+        $this->installSchemaGenerator = $installSchemaGenerator;
+        $this->uninstallGenerator = $uninstallGenerator;
+        $this->upgradeDataGenerator = $upgradeDataGenerator;
+        $this->upgradeSchemaGenerator = $upgradeSchemaGenerator;
+        parent::__construct($file, $modulesDirProvider);
     }
 
     /**
-     * @param string $moduleName
-     * @param string $version
+     * Generate base module files
+     *
+     * @param ModuleNameEntity $moduleNameEntity
+     * @param string           $version
+     * @param string           $dir
      *
      * @return \Generator
      * @throws \Magento\Framework\Exception\FileSystemException
+     * @throws \InvalidArgumentException
      */
-    public function generate($moduleName, $version = '')
+    public function generate(ModuleNameEntity $moduleNameEntity, $version = '', string $dir = ''): \Generator
     {
-        /** @var GeneratorResult[] $entities */
-        $entities = [];
+        $container = $this->createResultContainer();
 
-        $entities['registration'] = $this->createRegistrationGenerator($moduleName)->generate();
-        $entities['moduleXml'] = $this->createModuleXmlGenerator($moduleName, $version)->generate();
+        $container->insert('registration', $this->registration->generate($moduleNameEntity));
+        $container->insert(
+            'module_xml',
+            $this->moduleXml->generate($moduleNameEntity, ['moduleName' => $moduleNameEntity, 'version' => $version])
+        );
 
-        return $this->generateFiles($entities);
-    }
+        $container->insert(
+            'composer_json',
+            $this->composerJsonGenerator->generate($moduleNameEntity, ['version' => $version])
+        );
 
-    /**
-     * @param string $moduleName
-     *
-     * @return \Krifollk\CodeGenerator\Model\Generator\Module\Registration
-     */
-    protected function createRegistrationGenerator($moduleName)
-    {
-        return $this->registrationFactory->create(['moduleName' => $moduleName]);
-    }
+        $container->insert(
+            'install_data',
+            $this->installDataGenerator->generate($moduleNameEntity)
+        );
 
-    /**
-     * @param string $moduleName
-     * @param string $version
-     *
-     * @return \Krifollk\CodeGenerator\Model\Generator\Module\ModuleXml
-     */
-    protected function createModuleXmlGenerator($moduleName, $version = '')
-    {
-        return $this->moduleXmlFactory->create(['moduleName' => $moduleName, 'version' => $version]);
-    }
+        $container->insert(
+            'install_schema',
+            $this->installSchemaGenerator->generate($moduleNameEntity)
+        );
 
-    /**
-     * @param array $entities
-     *
-     * @todo move this code to abstract command class
-     * @return \Generator
-     * @throws \Magento\Framework\Exception\FileSystemException
-     */
-    protected function generateFiles(array $entities)
-    {
-        /** @var GeneratorResult $entity */
-        foreach ($entities as $entity) {
-            $this->file->createDirectory($entity->getDestinationDir(), DriverInterface::WRITEABLE_DIRECTORY_MODE);
-            $this->file->filePutContents($entity->getDestinationFile(), $entity->getContent());
-            yield $entity->getDestinationFile();
-        }
+        $container->insert(
+            'uninstall',
+            $this->uninstallGenerator->generate($moduleNameEntity)
+        );
+
+        $container->insert(
+            'upgrade_data',
+            $this->upgradeDataGenerator->generate($moduleNameEntity)
+        );
+
+        $container->insert(
+            'upgrade_schema',
+            $this->upgradeSchemaGenerator->generate($moduleNameEntity)
+        );
+
+        return $this->generateFiles($container, $moduleNameEntity, $dir);
     }
 }

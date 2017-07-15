@@ -1,7 +1,10 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * This file is part of Code Generator for Magento.
- * (c) 2016. Rostyslav Tymoshenko <krifollk@gmail.com>
+ * (c) 2017. Rostyslav Tymoshenko <krifollk@gmail.com>
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
@@ -17,26 +20,17 @@ use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
  */
 class GeneratorResult implements GeneratorResultInterface
 {
-    /**
-     * File Content
-     *
-     * @var string
-     */
-    private $content = '';
+    /** @var string */
+    private $content;
 
-    /**
-     * Destination file
-     *
-     * @var string
-     */
-    private $destinationFile = '';
+    /** @var string */
+    private $destinationFile;
 
-    /**
-     * Entity name
-     *
-     * @var string
-     */
-    private $entityName = '';
+    /** @var string */
+    private $entityName;
+
+    /** @var array */
+    private $exposedMessages;
 
     /**
      * GeneratorResult constructor.
@@ -44,51 +38,42 @@ class GeneratorResult implements GeneratorResultInterface
      * @param string $content
      * @param string $destinationFile
      * @param string $entityName
+     * @param array  $exposedMessages
      */
-    public function __construct($content, $destinationFile, $entityName)
-    {
+    public function __construct(
+        string $content,
+        string $destinationFile,
+        string $entityName = '',
+        array $exposedMessages = []
+    ) {
         $this->content = $content;
         $this->destinationFile = $destinationFile;
         $this->entityName = $entityName;
+        $this->exposedMessages = $exposedMessages;
     }
 
-    /**
-     * Get content
-     *
-     * @return string
-     */
-    public function getContent()
+    public function getContent(): string
     {
         return $this->content;
     }
 
-    /**
-     * Get destination dir
-     *
-     * @return string
-     */
-    public function getDestinationDir()
+    public function getDestinationDir(): string
     {
         return dirname($this->getDestinationFile());
     }
 
-    /**
-     * Get destination file
-     *
-     * @return string
-     */
-    public function getDestinationFile()
+    public function getDestinationFile(): string
     {
         return $this->destinationFile;
     }
 
-    /**
-     * Get entity name
-     *
-     * @return string
-     */
-    public function getEntityName()
+    public function getEntityName(): string
     {
         return $this->entityName;
+    }
+
+    public function getExposedMessages(): array
+    {
+        return $this->exposedMessages;
     }
 }

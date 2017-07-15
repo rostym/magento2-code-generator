@@ -1,0 +1,27 @@
+<?php
+
+namespace {{ namespace }};
+
+use Magento\Framework\Controller\ResultFactory;
+
+/**
+ * Class NewAction
+ *
+ * @method \Magento\Framework\App\Request\Http getRequest()
+ * @method \Magento\Framework\App\Response\Http getResponse()
+ *
+ * @package {{ namespace }}
+ */
+class NewAction extends \Magento\Backend\App\Action
+{
+    /**
+     * @inheritdoc
+     */
+    public function execute()
+    {
+        /** @var \Magento\Framework\Controller\Result\Forward $resultForward */
+        $resultForward = $this->resultFactory->create(ResultFactory::TYPE_FORWARD);
+
+        return $resultForward->forward('edit');
+    }
+}

@@ -1,0 +1,15 @@
+    /**
+     * Get {{ name }} value
+     *
+     * @return {{ type }}
+     */
+    public function get{{ name }}();
+
+    /**
+     * Set {{ name }} value
+     *
+     * @param {{ type }} $value
+     *
+     * @return $this
+     */
+    public function set{{ name }}($value);

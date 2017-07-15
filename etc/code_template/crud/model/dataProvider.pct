@@ -1,0 +1,67 @@
+<?php
+
+namespace {{ namespace }};
+
+/**
+ * Class DataProvider
+ *
+ * @package {{ namespace }}
+ */
+class DataProvider extends \Magento\Ui\DataProvider\AbstractDataProvider
+{
+    /** @var \Magento\Framework\App\Request\DataPersistorInterface */
+    private $dataPersistor;
+
+    /** @var array */
+    private $loadedData = [];
+
+    /**
+     * DataProvider constructor.
+     *
+     * @param string                                                $name
+     * @param string                                                $primaryFieldName
+     * @param string                                                $requestFieldName
+     * @param {{ collectionFactory }} $collectionFactory
+     * @param \Magento\Framework\App\Request\DataPersistorInterface $dataPersistor
+     * @param array                                                 $meta
+     * @param array                                                 $data
+     */
+    public function __construct(
+        $name,
+        $primaryFieldName,
+        $requestFieldName,
+        {{ collectionFactory }} $collectionFactory,
+        \Magento\Framework\App\Request\DataPersistorInterface $dataPersistor,
+        array $meta = [],
+        array $data = []
+    ) {
+        $this->collection = $collectionFactory->create();
+        $this->dataPersistor = $dataPersistor;
+        parent::__construct($name, $primaryFieldName, $requestFieldName, $meta, $data);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getData()
+    {
+        if ($this->loadedData) {
+            return $this->loadedData;
+        }
+        $items = $this->collection->getItems();
+
+        foreach ($items as $item) {
+            $this->loadedData[$item->getId()] = $item->getData();
+        }
+
+        $data = $this->dataPersistor->get('{{ dataPersistorKey }}');
+        if (!empty($data)) {
+            $item = $this->collection->getNewEmptyItem();
+            $item->setData($data);
+            $this->loadedData[$item->getId()] = $item->getData();
+            $this->dataPersistor->clear('{{ dataPersistorKey }}');
+        }
+
+        return $this->loadedData;
+    }
+}

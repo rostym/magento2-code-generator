@@ -1,0 +1,30 @@
+<?php
+
+namespace {{ namespace }};
+
+/**
+ * Class {{ entityName }}
+ *
+ * @method {{ resourceModel }} getResource()
+ * @method {{ collection }} getCollection()
+ * @method {{ collection }} getResourceCollection()
+ *
+ * @package {{ namespace }}
+ */
+class {{ entityName }} extends \Magento\Framework\Model\AbstractModel implements {{ entityInterface }}
+{
+    /**
+     * @inheritdoc
+     */
+    protected $_eventPrefix = '{{ eventPrefix }}';
+
+    /**
+     * @inheritdoc
+     */
+    protected function _construct()
+    {
+        $this->_init({{ resourceModel }}::class);
+    }
+
+{{ gettersSetters }}
+}

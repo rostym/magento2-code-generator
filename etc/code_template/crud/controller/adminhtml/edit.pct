@@ -1,0 +1,54 @@
+<?php
+
+namespace {{ namespace }};
+
+use Magento\Framework\Controller\ResultFactory;
+
+/**
+ * Class Edit
+ *
+ * @method \Magento\Framework\App\Request\Http getRequest()
+ * @method \Magento\Framework\App\Response\Http getResponse()
+ *
+ * @package {{ namespace }}
+ */
+class Edit extends \Magento\Backend\App\Action
+{
+    /** @var {{ entityRepositoryInterface }} */
+    private $entityRepository;
+
+    /**
+     * Edit constructor.
+     *
+     * @param \Magento\Backend\App\Action\Context        $context
+     * @param {{ entityRepositoryInterface }}     $entityRepository
+     */
+    public function __construct(
+        \Magento\Backend\App\Action\Context $context,
+        {{ entityRepositoryInterface }} $entityRepository
+    ) {
+        $this->entityRepository = $entityRepository;
+        parent::__construct($context);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function execute()
+    {
+        $id = $this->getRequest()->getParam('{{ requestIdFiledName }}');
+        if ($id === null) {
+            return $this->resultFactory->create(ResultFactory::TYPE_PAGE);
+        }
+        try {
+            $this->entityRepository->getById($id);
+        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+            $this->messageManager->addErrorMessage($e->getMessage());
+            $resultRedirect = $this->resultRedirectFactory->create();
+
+            return $resultRedirect->setPath('*/*/');
+        }
+
+        return $this->resultFactory->create(ResultFactory::TYPE_PAGE);
+    }
+}

@@ -1,0 +1,67 @@
+<?php
+
+namespace {{ namespace }};
+
+use Magento\Framework\Controller\ResultFactory;
+use Magento\Backend\App\Action\Context;
+
+/**
+ * Class MassDelete
+ *
+ * @method \Magento\Framework\App\Request\Http getRequest()
+ * @method \Magento\Framework\App\Response\Http getResponse()
+ *
+ * @package {{ namespace }}
+ */
+class MassDelete extends \Magento\Backend\App\Action
+{
+    /** @var {{ entityCollection }}Factory */
+    private $entityCollectionFactory;
+
+    /** @var \Magento\Ui\Component\MassAction\Filter */
+    private $filter;
+
+    /** @var {{ entityRepository }} */
+    private $entityRepository;
+
+    /**
+     * MassDelete constructor.
+     *
+     * @param Context $context
+     * @param \Magento\Ui\Component\MassAction\Filter $filter
+     * @param {{ entityCollection }}Factory $entityCollectionFactory
+     * @param {{ entityRepository }} $entityRepository
+     */
+    public function __construct(
+        Context $context,
+        \Magento\Ui\Component\MassAction\Filter $filter,
+        {{ entityCollection }}Factory $entityCollectionFactory,
+        {{ entityRepository }} $entityRepository
+    ) {
+        $this->filter = $filter;
+        $this->entityCollectionFactory = $entityCollectionFactory;
+        $this->entityRepository = $entityRepository;
+        parent::__construct($context);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function execute()
+    {
+        $collection = $this->filter->getCollection($this->entityCollectionFactory->create());
+
+        foreach ($collection as $item) {
+            $this->entityRepository->delete($item);
+        }
+
+        $this->messageManager->addSuccessMessage(
+            __('A total of %1 record(s) have been deleted.', $collection->count())
+        );
+
+        /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
+        $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
+
+        return $resultRedirect->setPath('*/*/');
+    }
+}

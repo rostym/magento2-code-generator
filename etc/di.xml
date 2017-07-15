@@ -1,11 +1,16 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Krifollk\CodeGenerator\Api\ModulesDirProviderInterface" type="Krifollk\CodeGenerator\Model\ModulesDirProvider" />
+    <preference for="Krifollk\CodeGenerator\Api\CodeTemplateEngineInterface" type="Krifollk\CodeGenerator\Model\CodeTemplate\Engine" />
+    <preference for="Krifollk\CodeGenerator\Api\TemplateResolverInterface" type="Krifollk\CodeGenerator\Model\CodeTemplate\TemplateResolver" />
     <type name="Magento\Framework\Console\CommandList">
         <arguments>
             <argument name="commands" xsi:type="array">
                 <item name="triadGenerationCommand" xsi:type="object">Krifollk\CodeGenerator\Console\Command\TriadGenerateCommand</item>
                 <item name="moduleGenerationCommand" xsi:type="object">Krifollk\CodeGenerator\Console\Command\GenerateModule</item>
+                <item name="crudGenerationCommand" xsi:type="object">Krifollk\CodeGenerator\Console\Command\GenerateCrud</item>
+                <item name="plugin_generation_command" xsi:type="object">Krifollk\CodeGenerator\Console\Command\GeneratePlugin</item>
             </argument>
         </arguments>
     </type>

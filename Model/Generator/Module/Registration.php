@@ -11,6 +11,7 @@ namespace Krifollk\CodeGenerator\Model\Generator\Module;
 use Krifollk\CodeGenerator\Api\GeneratorResultInterface;
 use Krifollk\CodeGenerator\Model\Generator\AbstractGenerator;
 use Krifollk\CodeGenerator\Model\GeneratorResult;
+use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Zend\Code\Generator\FileGenerator;
 
 /**
@@ -20,42 +21,41 @@ use Zend\Code\Generator\FileGenerator;
  */
 class Registration extends AbstractGenerator
 {
-    const FILE                    = BP . '/app/code/%s/registration.php';
-    const COMPONENT_REGISTRAR_USE = 'Magento\Framework\Component\ComponentRegistrar';
-    const BODY_PATTERN            = 'ComponentRegistrar::register(ComponentRegistrar::MODULE, \'%s\', __DIR__);';
+    const FILE = '%s/registration.php';
+    const BODY_PATTERN = 'ComponentRegistrar::register(ComponentRegistrar::MODULE, \'%s\', __DIR__);';
 
     /**
-     * Generate entity
-     *
-     * @return GeneratorResultInterface
+     * @inheritdoc
      */
-    public function generate()
+    protected function requiredArguments(): array
     {
-        $fileGenerator = new FileGenerator();
-        $fileGenerator->setUse(self::COMPONENT_REGISTRAR_USE);
-        $fileGenerator->setBody($this->generateBody());
+        return [];
+    }
 
-        //todo move to abstract class (createResult method)
+    /**
+     * @inheritdoc
+     */
+    protected function internalGenerate(
+        ModuleNameEntity $moduleNameEntity,
+        array $additionalArguments = []
+    ): GeneratorResultInterface {
+        $fileGenerator = new FileGenerator();
+        $fileGenerator->setUse(\Magento\Framework\Component\ComponentRegistrar::class);
+        $fileGenerator->setBody($this->generateBody($moduleNameEntity));
+
         return new GeneratorResult(
             $fileGenerator->generate(),
-            $this->generateFilePath(),
-            null
+            $this->generateFilePath($moduleNameEntity)
         );
     }
 
-    /**
-     * @return string
-     */
-    protected function generateBody()
+    protected function generateBody(ModuleNameEntity $moduleNameEntity): string
     {
-        return sprintf(self::BODY_PATTERN, str_replace('/', '_', $this->moduleName));
+        return sprintf(self::BODY_PATTERN, str_replace('/', '_', $moduleNameEntity->asPartOfPath()));
     }
 
-    /**
-     * @return string
-     */
-    protected function generateFilePath()
+    protected function generateFilePath(ModuleNameEntity $moduleNameEntity): string
     {
-        return sprintf(self::FILE, $this->moduleName);
+        return sprintf(self::FILE, $moduleNameEntity->asPartOfPath());
     }
 }

@@ -1,0 +1,145 @@
+<?php
+
+namespace {{ namespace }};
+
+use Magento\Framework\Api\SearchCriteriaInterface;
+use Magento\Framework\Api\SortOrder;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Exception\CouldNotDeleteException;
+
+/**
+ * Class {{ entityName }}Repository
+ *
+ * @package {{ namespace }}
+ */
+class {{ entityName }}Repository implements {{ entityRepositoryInterface }}
+{
+    /** @var {{ entityCollectionName }}Factory */
+    private $collectionFactory;
+
+    /** @var {{ entityInterface }}Factory */
+    private $entityFactory;
+
+    /** @var {{ entityResource }} */
+    private $resource;
+
+    /** @var {{ searchResultName }}Factory */
+    private $searchResultFactory;
+
+    /**
+     * {{ entityName }}Repository constructor.
+     *
+     * @param {{ entityResource }}                       $resource
+     * @param {{ entityInterface }}Factory ${{ entityNameVar }}Factory
+     * @param {{ entityCollectionName }}Factory     $collectionFactory
+     * @param {{ searchResultName }}Factory     $searchResultFactory
+     */
+    public function __construct(
+        {{ entityResource }} $resource,
+        {{ entityInterface }}Factory ${{ entityNameVar }}Factory,
+        {{ entityCollectionName }}Factory $collectionFactory,
+        {{ searchResultName }}Factory $searchResultFactory
+    ) {
+        $this->resource = $resource;
+        $this->entityFactory = ${{ entityNameVar }}Factory;
+        $this->collectionFactory = $collectionFactory;
+        $this->searchResultFactory = $searchResultFactory;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function save({{ entityInterface }} ${{ entityNameVar }})
+    {
+        try {
+            $this->resource->save(${{ entityNameVar }});
+        } catch (\Exception $exception) {
+            throw new \Magento\Framework\Exception\CouldNotSaveException(__($exception->getMessage()));
+        }
+
+        return ${{ entityNameVar }};
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getById(${{ entityNameVar }}Id)
+    {
+        ${{ entityNameVar }} = $this->entityFactory->create();
+        $this->resource->load(${{ entityNameVar }}, ${{ entityNameVar }}Id);
+        if (!${{ entityNameVar }}->getId()) {
+            throw new NoSuchEntityException(__('{{ entityName }} with id "%1" does not exist.', ${{ entityNameVar }}Id));
+        }
+
+        return ${{ entityNameVar }};
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function findById(${{ entityNameVar }}Id)
+    {
+        ${{ entityNameVar }} = $this->entityFactory->create();
+        $this->resource->load(${{ entityNameVar }}, ${{ entityNameVar }}Id);
+
+        if (!${{ entityNameVar }}->getId()) {
+            return null;
+        }
+
+        return ${{ entityNameVar }};
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getList(SearchCriteriaInterface $searchCriteria)
+    {
+        $searchResult = $this->searchResultFactory->create();
+        $searchResult->setSearchCriteria($searchCriteria);
+        $collection = $this->collectionFactory->create();
+
+        foreach ($searchCriteria->getFilterGroups() as $filterGroup) {
+            foreach ($filterGroup->getFilters() as $filter) {
+                $condition = $filter->getConditionType() ?: 'eq';
+                $collection->addFieldToFilter($filter->getField(), [$condition => $filter->getValue()]);
+            }
+        }
+
+        $sortOrders = $searchCriteria->getSortOrders();
+        $searchResult->setTotalCount($collection->getSize());
+        if ($sortOrders) {
+            foreach ($sortOrders as $sortOrder) {
+                $collection->addOrder(
+                    $sortOrder->getField(),
+                    ($sortOrder->getDirection() === SortOrder::SORT_ASC) ? 'ASC' : 'DESC'
+                );
+            }
+        }
+        $collection->setCurPage($searchCriteria->getCurrentPage());
+        $collection->setPageSize($searchCriteria->getPageSize());
+
+        return $searchResult->setItems($collection->getItems());
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function delete({{ entityInterface }} ${{ entityNameVar }})
+    {
+        try {
+            $this->resource->delete(${{ entityNameVar }});
+        } catch (\Exception $exception) {
+            throw new CouldNotDeleteException(__($exception->getMessage()));
+        }
+
+        return true;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function deleteById(${{ entityNameVar }}Id)
+    {
+        return $this->delete($this->getById(${{ entityNameVar }}Id));
+    }
+}
