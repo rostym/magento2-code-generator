@@ -124,12 +124,9 @@ File /var/www/magento2/app/code/Config/Editor/Plugin/Magento/Cms/Controller/Inde
 File /var/www/magento2/app/code/Config/Editor/etc/di.xml has been generated.
 ```
 
-In additional, all this commands supports --dir option where you can specify your custom module directory.
+In additional, all commands supports --dir option where you can specify your custom module directory.
 
 Ex: --dir=modules/module-some-dir
-
-
-
 
 ## Submitting bugs and feature requests
 
