@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Krifollk\CodeGenerator\Model\Command;
 
 use Krifollk\CodeGenerator\Api\ModulesDirProviderInterface;
+use Krifollk\CodeGenerator\Model\Generator\Plugin\DiGenerator;
 use Krifollk\CodeGenerator\Model\Generator\PluginGenerator;
 use Krifollk\CodeGenerator\Model\ModuleNameEntity;
 use Magento\Framework\Filesystem\Driver\File;
@@ -26,6 +27,9 @@ class Plugin extends AbstractCommand
     /** @var \Krifollk\CodeGenerator\Model\Generator\PluginGenerator */
     private $pluginGenerator;
 
+    /** @var \Krifollk\CodeGenerator\Model\Generator\Plugin\DiGenerator */
+    private $diGenerator;
+
     /**
      * Plugin constructor.
      *
@@ -36,10 +40,12 @@ class Plugin extends AbstractCommand
     public function __construct(
         File $file,
         ModulesDirProviderInterface $modulesDirProvider,
-        PluginGenerator $pluginGenerator
+        PluginGenerator $pluginGenerator,
+        DiGenerator $diGenerator
     ) {
         parent::__construct($file, $modulesDirProvider);
         $this->pluginGenerator = $pluginGenerator;
+        $this->diGenerator = $diGenerator;
     }
 
     /**
@@ -70,6 +76,11 @@ class Plugin extends AbstractCommand
                 ]
             )
         );
+
+        $container->insert('plugin_di', $this->diGenerator->generate($moduleNameEntity, [
+            'pluginClassName'      => $container->get('plugin_generator')->getEntityName(),
+            'interceptedClassName' => $interceptedClassName
+        ]));
 
         return $this->generateFiles($container, $moduleNameEntity, $dir);
     }

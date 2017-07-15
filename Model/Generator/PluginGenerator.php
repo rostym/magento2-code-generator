@@ -144,12 +144,8 @@ class PluginGenerator extends AbstractGenerator
             }
         }
 
-        $explodedClassName = explode('\\', $pluginFullClassName);
-        $shortClassName = array_pop($explodedClassName);
-        $namespace = trim(implode('\\', $explodedClassName), '\\');
-
+        list($shortClassName, $namespace) = $this->extractShortClassNameAndNamespace($pluginFullClassName);
         $content = $this->generatePluginContent($namespace, $shortClassName, $interceptors, $pluginFullClassName);
-
         $destinationFile = sprintf('%s.php', str_replace('\\', '/', trim($pluginFullClassName, '\\')));
 
         return new \Krifollk\CodeGenerator\Model\GeneratorResult(
@@ -208,13 +204,24 @@ class PluginGenerator extends AbstractGenerator
         $pattern = ' = %s';
         if ($parameter->isDefaultValueConstant()) {
             if (strpos($parameter->getDefaultValueConstantName(), 'self::') !== false) {
-                return sprintf($pattern,
-                    str_replace('self::', $interceptedClass . '::', $parameter->getDefaultValueConstantName()));
+                return sprintf(
+                    $pattern,
+                    str_replace('self::', $interceptedClass . '::', $parameter->getDefaultValueConstantName())
+                );
             }
 
             return sprintf($pattern, '\\' . $parameter->getDefaultValueConstantName());
         }
 
         return sprintf($pattern, var_export($parameter->getDefaultValue(), true));
+    }
+
+    private function extractShortClassNameAndNamespace(string $pluginFullClassName): array
+    {
+        $explodedClassName = explode('\\', $pluginFullClassName);
+        $shortClassName = array_pop($explodedClassName);
+        $namespace = trim(implode('\\', $explodedClassName), '\\');
+
+        return [$shortClassName, $namespace];
     }
 }

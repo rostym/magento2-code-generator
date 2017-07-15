@@ -81,11 +81,20 @@ abstract class AbstractXmlGenerator extends AbstractGenerator
         return $errors;
     }
 
-    protected function getDiConfigFile(ModuleNameEntity $moduleNameEntity): string
+    protected function getDiConfigFile(ModuleNameEntity $moduleNameEntity, string $scope = ''): string
     {
-        return sprintf(
-            '%s/etc/di.xml',
-            $moduleNameEntity->asPartOfPath()
-        );
+        if ($scope === '') {
+            return sprintf('%s/etc/di.xml', $moduleNameEntity->asPartOfPath());
+        }
+
+        $allowedScopes = ['frontend', 'adminhtml', 'webapi_rest', 'webapi_soap'];
+
+        if (!in_array($scope, $allowedScopes, true)) {
+            throw new \InvalidArgumentException(
+                sprintf('Provided scope [%s] not allowed. Allowed scopes [%s]', $scope, implode(', ', $allowedScopes))
+            );
+        }
+
+        return sprintf('%s/etc/%s/di.xml', $moduleNameEntity->asPartOfPath(), $scope);
     }
 }
